@@ -19,8 +19,6 @@ export default function TutorConnect() {
   const [error, setError] = useState(null);
 
   // Opciones dinámicas generadas desde la API
-//  const [titulaciones, setTitulaciones] = useState(["Todas"]);
-//  const [localidades, setLocalidades] = useState(["Todas"]);
 
   // Cargar todos los profesores al inicio para poblar los filtros
   useEffect(() => {
@@ -29,8 +27,6 @@ export default function TutorConnect() {
       .then(data => {
         const tits = ["Todas", ...new Set(data.map(p => p.titulacion).filter(Boolean))];
         const locs = ["Todas", ...new Set(data.map(p => p.localidad).filter(Boolean))];
-  //      setTitulaciones(tits);
-  //      setLocalidades(locs);
       })
       .catch(() => {
         // Si falla, dejamos los valores por defecto
