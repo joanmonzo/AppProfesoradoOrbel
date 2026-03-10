@@ -168,16 +168,15 @@ export default function TutorConnect() {
               </datalist>
             </div>
 
-            {/* Curso */}
+            {/* Curso - desplegable */}
             <div>
               <label style={labelStyle}>Curso</label>
-              <input 
-                type="text" 
-                name="curso" 
-                value={form.curso === "Todos" ? "" : form.curso} 
-                onChange={handleChange} 
-                style={inputStyle} 
-              />
+              <select name="curso" value={form.curso} onChange={handleChange} style={inputStyle}>
+                <option value="Todos">Todos</option>
+                {cursosDisponibles.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             {/* Localidad */}
