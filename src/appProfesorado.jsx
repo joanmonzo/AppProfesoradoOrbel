@@ -18,11 +18,9 @@ export default function TutorConnect() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Opciones dinámicas generadas desde la API
   const [, setTitulaciones] = useState(["Todas"]);
   const [, setLocalidades] = useState(["Todas"]);
 
-  // Cargar todos los profesores al inicio para poblar los filtros
   useEffect(() => {
     fetch(API_URL)
       .then(res => res.json())
@@ -33,7 +31,6 @@ export default function TutorConnect() {
         setLocalidades(locs);
       })
       .catch(() => {
-        // Si falla, dejamos los valores por defecto
       });
   }, []);
 
@@ -87,21 +84,17 @@ export default function TutorConnect() {
             ? precioProfesor.split("-").map(v => Number(v.trim()))
             : [Number(precioProfesor), Number(precioProfesor)];
 
-          // Búsqueda por rango (ej: "10-20")
           if (input.includes("-")) {
             const [bMin, bMax] = input.split("-").map(v => Number(v.trim()));
             return pMin <= bMax && pMax >= bMin;
           }
 
-          // Búsqueda por número exacto: solo coincide si el precio del profesor
-          // es exactamente ese número o un rango que empieza o acaba en ese número
           const bNum = Number(input);
           return pMin === bNum || pMax === bNum;
         })())
       );
 
       setResults(filtered);
-      // Inicializar observaciones con los valores de la API
       const obs = {};
       filtered.forEach(t => { obs[t.id] = t.observaciones ?? ""; });
       setObservaciones(obs);
@@ -168,7 +161,18 @@ export default function TutorConnect() {
             {/* Titulación */}
             <div>
               <label style={labelStyle}>Titulación</label>
-              <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} style={inputStyle} />
+              <input 
+                type="text" 
+                name="titulacion" 
+                value={form.titulacion === "Todas" ? "" : form.titulacion} 
+                onChange={handleChange} 
+                style={inputStyle} 
+              />
+              <datalist id="titulaciones-list">
+                {titulaciones.map(t => (
+                  <option key={t} value={t} />
+                ))}
+              </datalist>
             </div>
 
             {/* Curso */}
