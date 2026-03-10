@@ -158,7 +158,6 @@ export default function TutorConnect() {
                 name="titulacion"
                 value={form.titulacion === "Todas" ? "" : form.titulacion}
                 onChange={handleChange}
-                placeholder="Ej: Carretillero"
                 list="titulaciones-list"
                 style={inputStyle}
               />
@@ -172,19 +171,37 @@ export default function TutorConnect() {
             {/* Curso */}
             <div>
               <label style={labelStyle}>Curso</label>
-              <input type="text" name="curso" value={form.curso === "Todos" ? "" : form.curso} onChange={handleChange} placeholder="Ej: 1º ESO" style={inputStyle} />
+              <input 
+                type="text" 
+                name="curso" 
+                value={form.curso === "Todos" ? "" : form.curso} 
+                onChange={handleChange} 
+                style={inputStyle} 
+              />
             </div>
 
             {/* Localidad */}
             <div>
               <label style={labelStyle}>Localidad</label>
-              <input type="text" name="localidad" value={form.localidad === "Todas" ? "" : form.localidad} onChange={handleChange} placeholder="Ej: Madrid" style={inputStyle} />
+              <input 
+                type="text" 
+                name="localidad" 
+                value={form.localidad === "Todas" ? "" : form.localidad} 
+                onChange={handleChange} 
+                style={inputStyle} 
+              />
             </div>
 
             {/* Sexo */}
             <div>
               <label style={labelStyle}>Sexo</label>
-              <input type="text" name="sexo" value={form.sexo === "Todos" ? "" : form.sexo} onChange={handleChange} placeholder="Ej: H / M" style={inputStyle} />
+              <input 
+                type="text"
+                name="sexo" 
+                value={form.sexo === "Todos" ? "" : form.sexo} 
+                onChange={handleChange} 
+                style={inputStyle} 
+              />
             </div>
 
             {/* Experiencia años */}
@@ -195,7 +212,6 @@ export default function TutorConnect() {
                 name="experiencia_anio"
                 value={form.experiencia_anio}
                 onChange={handleChange}
-                placeholder="Ej: 2"
                 min={0}
                 style={inputStyle}
               />
@@ -209,7 +225,6 @@ export default function TutorConnect() {
                 name="experiencia_horas"
                 value={form.experiencia_horas}
                 onChange={handleChange}
-                placeholder="Ej: 100"
                 min={0}
                 style={inputStyle}
               />
@@ -223,7 +238,6 @@ export default function TutorConnect() {
                 name="precioMax"
                 value={form.precioMax}
                 onChange={handleChange}
-                placeholder="Ej: 20 o 20-30"
                 style={inputStyle}
               />
             </div>
