@@ -18,6 +18,7 @@ export default function TutorConnect() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [titulaciones, setTitulaciones] = useState([]);
+  const [cursosDisponibles, setCursosDisponibles] = useState([]);
 
   useEffect(() => {
     fetch(API_URL)
@@ -25,6 +26,15 @@ export default function TutorConnect() {
       .then(data => {
         const tits = [...new Set(data.map(p => p.titulacion).filter(Boolean))];
         setTitulaciones(tits);
+
+        const cursos = [...new Set(
+          data.flatMap(p =>
+            p.cursos
+              ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim()))
+              : []
+          ).filter(Boolean)
+        )];
+        setCursosDisponibles(cursos);
       })
       .catch(() => {});
   }, []);
@@ -182,25 +192,13 @@ export default function TutorConnect() {
             {/* Localidad */}
             <div>
               <label style={labelStyle}>Localidad</label>
-              <input 
-                type="text" 
-                name="localidad" 
-                value={form.localidad === "Todas" ? "" : form.localidad} 
-                onChange={handleChange} 
-                style={inputStyle} 
-              />
+              <input type="text" name="localidad" value={form.localidad === "Todas" ? "" : form.localidad} onChange={handleChange} style={inputStyle} />
             </div>
 
             {/* Sexo */}
             <div>
               <label style={labelStyle}>Sexo</label>
-              <input 
-                type="text"
-                name="sexo" 
-                value={form.sexo === "Todos" ? "" : form.sexo} 
-                onChange={handleChange} 
-                style={inputStyle} 
-              />
+              <input type="text" name="sexo" value={form.sexo === "Todos" ? "" : form.sexo} onChange={handleChange} style={inputStyle} />
             </div>
 
             {/* Experiencia años */}
