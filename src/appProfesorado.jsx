@@ -19,6 +19,7 @@ export default function TutorConnect() {
   const [titulaciones, setTitulaciones] = useState([]);
   const [cursosDisponibles, setCursosDisponibles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedId, setExpandedId] = useState(null);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -295,18 +296,32 @@ export default function TutorConnect() {
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {currentResults.map((t, i) => (
+              {currentResults.map((t, i) => {
+                const isExpanded = expandedId === t.id;
+                return (
                 <div key={t.id || i} style={{
                   background: "#fff",
-                  border: "1px solid #e5e7eb",
+                  border: isExpanded ? "2px solid #111" : "1px solid #e5e7eb",
                   borderRadius: 12,
                   padding: "20px 24px",
-                  boxShadow: "0 1px 6px rgba(0,0,0,0.05)",
-                }}>
+                  boxShadow: isExpanded ? "0 4px 12px rgba(0,0,0,0.1)" : "0 1px 6px rgba(0,0,0,0.05)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onClick={() => setExpandedId(isExpanded ? null : t.id)}
+                >
                   {/* Nombre y precio */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#111" }}>
-                      {t.nombre || t.name}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isExpanded ? 16 : 0 }}>
+                    <div>
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#111", display: "flex", alignItems: "center", gap: 8 }}>
+                        {t.nombre || t.name}
+                        <span style={{ fontSize: 12, color: "#6b7280", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+                          ▼
+                        </span>
+                      </div>
+                      {!isExpanded && t.titulacion && (
+                        <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>🎓 {t.titulacion} • 📍 {t.localidad || "Sin localidad"}</div>
+                      )}
                     </div>
                     {t.precio && (
                       <div style={{ textAlign: "right" }}>
@@ -315,8 +330,10 @@ export default function TutorConnect() {
                     )}
                   </div>
 
-                  {/* Campos en grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {isExpanded && (
+                    <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
+                      {/* Campos en grid */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {[
                       { label: "Titulación", value: t.titulacion, icon: "🎓" },
                       { label: "Localidad", value: t.localidad, icon: "📍" },
@@ -378,8 +395,11 @@ export default function TutorConnect() {
                       )}
                     </div>
                   </div>
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Controles de paginación */}
