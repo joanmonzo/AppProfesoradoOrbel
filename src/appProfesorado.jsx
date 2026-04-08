@@ -19,6 +19,8 @@ export default function TutorConnect() {
   const [error, setError] = useState(null);
   const [titulaciones, setTitulaciones] = useState([]);
   const [cursosDisponibles, setCursosDisponibles] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     fetch(API_URL)
@@ -97,6 +99,7 @@ export default function TutorConnect() {
       );
 
       setResults(filtered);
+      setCurrentPage(1);
       const obs = {};
       filtered.forEach(t => { obs[t.id] = t.observaciones ?? ""; });
       setObservaciones(obs);
@@ -127,6 +130,10 @@ export default function TutorConnect() {
     background: "#fff",
     fontFamily: "inherit",
   };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentResults = results ? results.slice(indexOfFirstItem, indexOfLastItem) : [];
 
   return (
     <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "'DM Sans', sans-serif" }}>
@@ -287,7 +294,7 @@ export default function TutorConnect() {
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {results.map((t, i) => (
+              {currentResults.map((t, i) => (
                 <div key={t.id || i} style={{
                   background: "#fff",
                   border: "1px solid #e5e7eb",
@@ -373,6 +380,47 @@ export default function TutorConnect() {
                 </div>
               ))}
             </div>
+
+            {/* Controles de paginación */}
+            {results.length > itemsPerPage && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: 24, gap: 16 }}>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: "8px 16px",
+                    background: currentPage === 1 ? "#e5e7eb" : "#111",
+                    color: currentPage === 1 ? "#9ca3af" : "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                    fontFamily: "inherit",
+                    fontWeight: 600,
+                  }}
+                >
+                  Anterior
+                </button>
+                <div style={{ fontSize: 14, color: "#374151" }}>
+                  Página <strong>{currentPage}</strong> de {Math.ceil(results.length / itemsPerPage)}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / itemsPerPage), p + 1))}
+                  disabled={currentPage === Math.ceil(results.length / itemsPerPage)}
+                  style={{
+                    padding: "8px 16px",
+                    background: currentPage === Math.ceil(results.length / itemsPerPage) ? "#e5e7eb" : "#111",
+                    color: currentPage === Math.ceil(results.length / itemsPerPage) ? "#9ca3af" : "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: currentPage === Math.ceil(results.length / itemsPerPage) ? "not-allowed" : "pointer",
+                    fontFamily: "inherit",
+                    fontWeight: 600,
+                  }}
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
