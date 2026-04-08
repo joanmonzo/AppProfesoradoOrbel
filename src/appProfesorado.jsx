@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-
-const API_URL = "https://api-profesores.onrender.com/api/profesores/todos";
+const API_URL = "https://script.google.com/macros/s/AKfycbwgCM-LjBMtEc_LwK7Gs7D6yfZ97niXebD3fGeSFmd18vTWQR7UY61ui-rMuB-nH_En/exec?action=todos";
 
 const initialForm = {
   titulacion: "Todas",
@@ -53,10 +52,12 @@ export default function TutorConnect() {
     setSavingId(id);
     setSaveStatus(prev => ({ ...prev, [id]: null }));
     try {
-      const res = await fetch(`https://api-profesores.onrender.com/api/profesores/${id}/observaciones`, {
+      const texto = observaciones[id] || "";
+      const query = new URLSearchParams({ action: "observaciones", id: id, observaciones: texto, observacion: texto }).toString();
+      const res = await fetch(`https://script.google.com/macros/s/AKfycbwgCM-LjBMtEc_LwK7Gs7D6yfZ97niXebD3fGeSFmd18vTWQR7UY61ui-rMuB-nH_En/exec?` + query, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(observaciones[id] ?? ""),
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: texto,
       });
       if (!res.ok) throw new Error();
       setSaveStatus(prev => ({ ...prev, [id]: "ok" }));
