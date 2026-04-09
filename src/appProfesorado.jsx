@@ -32,8 +32,10 @@ const styles = {
 };
 
 const initialForm = {
+  nombre: "",
   titulacion: "Todas", curso: "Todos", localidad: "Todas",
   experiencia_anio: "", experiencia_horas: "", precioMax: "", sexo: "Todos",
+  trabajado_con_orbel: "Todos",
 };
 
 // ==========================================
@@ -51,9 +53,9 @@ const PaginationControls = ({ currentPage, totalItems, itemsPerPage, onPageChang
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: 24, gap: 16 }}>
-      <button 
-        onClick={() => onPageChange(Math.max(1, currentPage - 1))} 
-        disabled={currentPage === 1} 
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
         style={btnStyle(currentPage === 1)}
       >
         Anterior
@@ -61,9 +63,9 @@ const PaginationControls = ({ currentPage, totalItems, itemsPerPage, onPageChang
       <div style={{ fontSize: 14, color: "#374151" }}>
         Página <strong>{currentPage}</strong> de {totalPages}
       </div>
-      <button 
-        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} 
-        disabled={currentPage === totalPages} 
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
         style={btnStyle(currentPage === totalPages)}
       >
         Siguiente
@@ -87,6 +89,7 @@ export default function TutorConnect() {
   const [cursosDisponibles, setCursosDisponibles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
+  const [sortBy, setSortBy] = useState("default");
   const itemsPerPage = 5;
 
   // Estado de Observaciones
@@ -103,7 +106,7 @@ export default function TutorConnect() {
         setCursosDisponibles([...new Set(
           data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : [])
         ).filter(Boolean)]);
-      }).catch(() => {});
+      }).catch(() => { });
   }, []);
 
   const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -142,13 +145,13 @@ export default function TutorConnect() {
         const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toLowerCase().includes(form.sexo.toLowerCase()));
         const matchExpAnio = form.experiencia_anio === "" || Number(t.experiencia_anio) >= Number(form.experiencia_anio);
         const matchExpHoras = form.experiencia_horas === "" || Number(t.experiencia_horas) >= Number(form.experiencia_horas);
-        
+
         const matchPrecio = form.precioMax === "" || (() => {
           const input = form.precioMax.trim();
           const precioProfesor = String(t.precio).trim();
           const esRango = precioProfesor.includes("-");
           const [pMin, pMax] = esRango ? precioProfesor.split("-").map(v => Number(v.trim())) : [Number(precioProfesor), Number(precioProfesor)];
-          
+
           if (input.includes("-")) {
             const [bMin, bMax] = input.split("-").map(v => Number(v.trim()));
             return pMin <= bMax && pMax >= bMin;
@@ -157,12 +160,20 @@ export default function TutorConnect() {
           return pMin === bNum || pMax === bNum;
         })();
 
-        return matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio;
+        const matchOrbel = form.trabajado_con_orbel === "Todos" || (() => {
+          const val = String(t.trabajado_con_orbel || "").toLowerCase().trim();
+          const isNo = val === "no" || val === "";
+          return form.trabajado_con_orbel === "Sí" ? !isNo : isNo;
+        })();
+
+        const matchNombre = form.nombre === "" || String(t.nombre || t.name || "").toLowerCase().includes(form.nombre.toLowerCase());
+
+        return matchNombre && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio && matchOrbel;
       });
 
       setResults(filtered);
       setCurrentPage(1);
-      
+
       const obs = {};
       filtered.forEach(t => { obs[t.id] = t.observaciones ?? ""; });
       setObservaciones(obs);
@@ -173,21 +184,42 @@ export default function TutorConnect() {
     }
   };
 
+  const getNumericPrice = (p) => {
+    if (!p) return Infinity;
+    const str = String(p).trim();
+    if (str.includes("-")) {
+      return Number(str.split("-")[0]);
+    }
+    return Number(str) || Infinity;
+  };
+
+  const sortedResults = results ? [...results].sort((a, b) => {
+    if (sortBy === "precioAsc") return getNumericPrice(a.precio) - getNumericPrice(b.precio);
+    if (sortBy === "precioDesc") {
+      const pA = getNumericPrice(a.precio) === Infinity ? 0 : getNumericPrice(a.precio);
+      const pB = getNumericPrice(b.precio) === Infinity ? 0 : getNumericPrice(b.precio);
+      return pB - pA;
+    }
+    if (sortBy === "expDesc") return Number(b.experiencia_anio || 0) - Number(a.experiencia_anio || 0);
+    if (sortBy === "nombreAsc") return String(a.nombre || a.name || "").localeCompare(String(b.nombre || b.name || ""));
+    return 0;
+  }) : null;
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentResults = results ? results.slice(indexOfFirstItem, indexOfLastItem) : [];
+  const currentResults = sortedResults ? sortedResults.slice(indexOfFirstItem, indexOfLastItem) : [];
 
   return (
     <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         input:focus, select:focus { outline: 2px solid #111; outline-offset: 2px; }
         select { appearance: none; }
       `}</style>
 
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "60px 24px" }}>
-        
+
         {/* Cabecera */}
         <div style={{ marginBottom: 36, textAlign: "center" }}>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#111", marginBottom: 8 }}>Buscar Profesores</h1>
@@ -198,9 +230,12 @@ export default function TutorConnect() {
         <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e7eb", padding: "32px", marginBottom: 32, boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <div>
-              <label style={styles.label}>Titulación</label>
-              <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" style={styles.input} />
-              <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
+              <label style={styles.label}>Nombre</label>
+              <input type="text" name="nombre" value={form.nombre} onChange={handleChange} style={styles.input} />
+            </div>
+            <div>
+              <label style={styles.label}>Sexo</label>
+              <input type="text" name="sexo" value={form.sexo === "Todos" ? "" : form.sexo} onChange={handleChange} style={styles.input} />
             </div>
             <div>
               <label style={styles.label}>Curso</label>
@@ -214,28 +249,25 @@ export default function TutorConnect() {
               <input type="text" name="localidad" value={form.localidad === "Todas" ? "" : form.localidad} onChange={handleChange} style={styles.input} />
             </div>
             <div>
-              <label style={styles.label}>Sexo</label>
-              <input type="text" name="sexo" value={form.sexo === "Todos" ? "" : form.sexo} onChange={handleChange} style={styles.input} />
+              <label style={styles.label}>Trabajó en Orbel</label>
+              <select name="trabajado_con_orbel" value={form.trabajado_con_orbel} onChange={handleChange} style={styles.input}>
+                <option value="Todos">Todos</option>
+                <option value="Sí">Sí</option>
+                <option value="No">No</option>
+              </select>
             </div>
             <div>
-              <label style={styles.label}>Experiencia (años)</label>
-              <input type="number" name="experiencia_anio" value={form.experiencia_anio} onChange={handleChange} min={0} style={styles.input} />
-            </div>
-            <div>
-              <label style={styles.label}>Experiencia (horas)</label>
-              <input type="number" name="experiencia_horas" value={form.experiencia_horas} onChange={handleChange} min={0} style={styles.input} />
-            </div>
-            <div>
-              <label style={styles.label}>Precio</label>
-              <input type="text" name="precioMax" value={form.precioMax} onChange={handleChange} style={styles.input} />
+              <label style={styles.label}>Titulación</label>
+              <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" style={styles.input} />
+              <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
             </div>
           </div>
 
-          <button 
-            onClick={handleSearch} 
-            disabled={loading} 
-            style={{ ...styles.btnSearch, background: loading ? "#f87171" : "#dc2626", cursor: loading ? "not-allowed" : "pointer" }} 
-            onMouseEnter={e => !loading && (e.target.style.background = "#b91c1c")} 
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            style={{ ...styles.btnSearch, background: loading ? "#f87171" : "#dc2626", cursor: loading ? "not-allowed" : "pointer" }}
+            onMouseEnter={e => !loading && (e.target.style.background = "#b91c1c")}
             onMouseLeave={e => !loading && (e.target.style.background = "#dc2626")}
           >
             {loading ? "Buscando..." : "Buscar profesores"}
@@ -252,28 +284,51 @@ export default function TutorConnect() {
         {/* Área de Resultados */}
         {results !== null && !error && (
           <div>
-            <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
-              {results.length > 0 ? <>Se encontraron <strong style={{ color: "#111" }}>{results.length}</strong> profesor{results.length !== 1 ? "es" : ""}</> : "No se encontraron profesores con esos criterios."}
-            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
+              <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
+                {results.length > 0 ? <>Se encontraron <strong style={{ color: "#111" }}>{results.length}</strong> profesor{results.length !== 1 ? "es" : ""}</> : "No se encontraron profesores con esos criterios."}
+              </p>
+
+              {results.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <label style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>ORDENAR:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+                    style={{ ...styles.input, padding: "6px 10px", width: "auto", fontSize: 13 }}
+                  >
+                    <option value="default">Relevancia</option>
+                    <option value="precioAsc">Precio: más barato</option>
+                    <option value="precioDesc">Precio: más caro</option>
+                    <option value="expDesc">Mayor experiencia</option>
+                    <option value="nombreAsc">Nombre (A-Z)</option>
+                  </select>
+                </div>
+              )}
+            </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {currentResults.map((t, i) => {
                 const isExpanded = expandedId === t.id;
                 return (
                   <div key={t.id || i} style={styles.card(isExpanded)} onClick={() => setExpandedId(isExpanded ? null : t.id)}>
-                    
+
                     {/* Tarjeta contraída: Nombre y breve resumen */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isExpanded ? 16 : 0 }}>
                       <div style={{ flex: 1, paddingRight: 16 }}>
-                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#111", display: "flex", alignItems: "center", gap: 8 }}>
-                          {t.nombre || t.name}
+                        <div style={{ fontFamily: "'Outfit', 'DM Sans', sans-serif", fontSize: 17, fontWeight: 600, color: "#111", display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px 12px" }}>
+                          <span>{t.nombre || t.name}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#6b7280", fontWeight: 400, fontFamily: "'DM Sans', sans-serif" }}>
+                            {t.sexo && <span>👤 {t.sexo}</span>}
+                            {t.localidad && <span>📍 {t.localidad}</span>}
+                          </div>
                           <span style={{ fontSize: 12, color: "#6b7280", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
                         </div>
                         {!isExpanded && t.titulacion && (
-                          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6, lineHeight: 1.4 }}>🎓 {t.titulacion} • 📍 {t.localidad || "Sin localidad"}</div>
+                          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6, lineHeight: 1.4 }}>🎓 {t.titulacion}</div>
                         )}
                       </div>
-                      
+
                       {!isExpanded && (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
                           {t.certificado_docencia && t.certificado_docencia !== "" && (
@@ -294,6 +349,11 @@ export default function TutorConnect() {
                               E-LEARNING: {t.certificado_teleformacion}
                             </div>
                           )}
+                          {(t.trabajado_con_orbel && String(t.trabajado_con_orbel).toLowerCase().trim() !== "no" && String(t.trabajado_con_orbel).trim() !== "") && (
+                            <div style={{ fontSize: 11, color: "#9a3412", fontWeight: 700, background: "#ffedd5", padding: "4px 10px", borderRadius: 12 }}>
+                              ORBEL: {t.trabajado_con_orbel}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -309,6 +369,7 @@ export default function TutorConnect() {
                             { label: "Experiencia", value: (t.experiencia_anio != null && t.experiencia_horas != null) ? `${t.experiencia_anio} años y ${t.experiencia_horas} horas` : null, icon: "⏱" },
                             { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
                             { label: "Precio", value: t.precio ? `${t.precio} €` : null, icon: "💰" },
+                            { label: "Ha trabajado en Orbel", value: t.trabajado_con_orbel, icon: "🏢" },
                           ].map(({ label, value, icon }) => value != null && value !== "" && (
                             <div key={label} style={{ background: "#f9fafb", borderRadius: 8, padding: "10px 12px" }}>
                               <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
