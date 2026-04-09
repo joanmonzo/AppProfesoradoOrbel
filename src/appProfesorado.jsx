@@ -222,7 +222,7 @@ export default function TutorConnect() {
         <h1 className="title-font" style={{ fontSize: 34, fontWeight: 700, marginBottom: 8, letterSpacing: "-0.5px" }}>
           Academia Industrial by Orbel
         </h1>
-        <p style={{ fontSize: 15, color: "var(--text-secondary)" }}>Directorio de formadores especializados</p>
+        <p style={{ fontSize: 15, color: "var(--text-secondary)" }}>Directorio de profesorado</p>
       </div>
 
       {/* Panel de Filtros */}
