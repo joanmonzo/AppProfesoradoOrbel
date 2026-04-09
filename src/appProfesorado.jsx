@@ -276,13 +276,21 @@ export default function TutorConnect() {
                       
                       {!isExpanded && (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
-                          {(t.certificado_docencia && t.certificado_docencia !== "No" && t.certificado_docencia !== "") && (
-                            <div style={{ fontSize: 11, color: "#4f46e5", fontWeight: 700, background: "#e0e7ff", padding: "4px 10px", borderRadius: 12 }}>
+                          {t.certificado_docencia && t.certificado_docencia !== "" && (
+                            <div style={{
+                              fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12,
+                              color: t.certificado_docencia.toLowerCase().trim() === "no" ? "#991b1b" : "#4f46e5",
+                              background: t.certificado_docencia.toLowerCase().trim() === "no" ? "#fee2e2" : "#e0e7ff"
+                            }}>
                               SSCE0110: {t.certificado_docencia}
                             </div>
                           )}
-                          {(t.certificado_teleformacion && t.certificado_teleformacion !== "No" && t.certificado_teleformacion !== "") && (
-                            <div style={{ fontSize: 11, color: "#059669", fontWeight: 700, background: "#d1fae5", padding: "4px 10px", borderRadius: 12 }}>
+                          {t.certificado_teleformacion && t.certificado_teleformacion !== "" && (
+                            <div style={{
+                              fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12,
+                              color: t.certificado_teleformacion.toLowerCase().trim() === "no" ? "#991b1b" : "#059669",
+                              background: t.certificado_teleformacion.toLowerCase().trim() === "no" ? "#fee2e2" : "#d1fae5"
+                            }}>
                               E-LEARNING: {t.certificado_teleformacion}
                             </div>
                           )}
