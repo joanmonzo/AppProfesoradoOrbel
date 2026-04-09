@@ -263,18 +263,30 @@ export default function TutorConnect() {
                   <div key={t.id || i} style={styles.card(isExpanded)} onClick={() => setExpandedId(isExpanded ? null : t.id)}>
                     
                     {/* Tarjeta contraída: Nombre y breve resumen */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isExpanded ? 16 : 0 }}>
-                      <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isExpanded ? 16 : 0 }}>
+                      <div style={{ flex: 1, paddingRight: 16 }}>
                         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#111", display: "flex", alignItems: "center", gap: 8 }}>
                           {t.nombre || t.name}
                           <span style={{ fontSize: 12, color: "#6b7280", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
                         </div>
                         {!isExpanded && t.titulacion && (
-                          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>🎓 {t.titulacion} • 📍 {t.localidad || "Sin localidad"}</div>
+                          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 6, lineHeight: 1.4 }}>🎓 {t.titulacion} • 📍 {t.localidad || "Sin localidad"}</div>
                         )}
                       </div>
-                      {t.precio && (
-                        <div style={{ textAlign: "right", fontSize: 20, fontWeight: 700, color: "#111" }}>{t.precio}€</div>
+                      
+                      {!isExpanded && (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+                          {(t.certificado_docencia && t.certificado_docencia !== "No" && t.certificado_docencia !== "") && (
+                            <div style={{ fontSize: 11, color: "#4f46e5", fontWeight: 700, background: "#e0e7ff", padding: "4px 10px", borderRadius: 12 }}>
+                              SSCE0110: {t.certificado_docencia}
+                            </div>
+                          )}
+                          {(t.certificado_teleformacion && t.certificado_teleformacion !== "No" && t.certificado_teleformacion !== "") && (
+                            <div style={{ fontSize: 11, color: "#059669", fontWeight: 700, background: "#d1fae5", padding: "4px 10px", borderRadius: 12 }}>
+                              E-LEARNING: {t.certificado_teleformacion}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -288,6 +300,7 @@ export default function TutorConnect() {
                             { label: "Sexo", value: t.sexo, icon: "👤" },
                             { label: "Experiencia", value: (t.experiencia_anio != null && t.experiencia_horas != null) ? `${t.experiencia_anio} años y ${t.experiencia_horas} horas` : null, icon: "⏱" },
                             { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
+                            { label: "Precio", value: t.precio ? `${t.precio} €` : null, icon: "💰" },
                           ].map(({ label, value, icon }) => value != null && value !== "" && (
                             <div key={label} style={{ background: "#f9fafb", borderRadius: 8, padding: "10px 12px" }}>
                               <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
