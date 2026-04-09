@@ -250,8 +250,8 @@ export default function TutorConnect() {
 
         {/* Cabecera */}
         <div style={{ marginBottom: 36, textAlign: "center" }}>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#111", marginBottom: 8 }}>Buscar Profesores</h1>
-          <p style={{ fontSize: 15, color: "#6b7280" }}>Usa los filtros para encontrar el profesor ideal</p>
+          <h1 style={{ fontFamily: "'Outfit', 'DM Sans', sans-serif", fontSize: 34, fontWeight: 700, color: "#111", marginBottom: 8, letterSpacing: "-0.5px" }}>Academia Industrial by Orbel</h1>
+          <p style={{ fontSize: 15, color: "#6b7280" }}>Directorio de formadores especializados</p>
         </div>
 
         {/* Panel de Filtros */}
@@ -322,9 +322,9 @@ export default function TutorConnect() {
           <button
             onClick={handleSearch}
             disabled={loading}
-            style={{ ...styles.btnSearch, background: loading ? "#f87171" : "#dc2626", cursor: loading ? "not-allowed" : "pointer" }}
-            onMouseEnter={e => !loading && (e.target.style.background = "#b91c1c")}
-            onMouseLeave={e => !loading && (e.target.style.background = "#dc2626")}
+            style={{ ...styles.btnSearch, background: loading ? "#4ade80" : "#16a34a", cursor: loading ? "not-allowed" : "pointer" }}
+            onMouseEnter={e => !loading && (e.target.style.background = "#15803d")}
+            onMouseLeave={e => !loading && (e.target.style.background = "#16a34a")}
           >
             {loading ? "Buscando..." : "Buscar profesores"}
           </button>
