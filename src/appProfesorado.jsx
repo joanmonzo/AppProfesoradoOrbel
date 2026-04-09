@@ -143,7 +143,7 @@ export default function TutorConnect() {
         const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && t.titulacion.toLowerCase().includes(form.titulacion.toLowerCase()));
         const matchCurso = form.curso === "Todos" || form.curso === "" || (t.cursos && (Array.isArray(t.cursos) ? t.cursos : t.cursos.split(",").map(c => c.trim())).some(c => c.toLowerCase().includes(form.curso.toLowerCase())));
         const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.toLowerCase().includes(form.localidad.toLowerCase()));
-        const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toLowerCase().includes(form.sexo.toLowerCase()));
+        const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toUpperCase().trim() === form.sexo);
         const matchExpAnio = form.experiencia_anio === "" || Number(t.experiencia_anio) >= Number(form.experiencia_anio);
         const matchExpHoras = form.experiencia_horas === "" || Number(t.experiencia_horas) >= Number(form.experiencia_horas);
 
@@ -244,8 +244,8 @@ export default function TutorConnect() {
               <label style={styles.label}>Sexo</label>
               <select name="sexo" value={form.sexo} onChange={handleChange} style={styles.input}>
                 <option value="Todos">Todos</option>
-                <option value="Hombre">Hombre</option>
-                <option value="Mujer">Mujer</option>
+                <option value="M">Masculino (M)</option>
+                <option value="F">Femenino (F)</option>
               </select>
             </div>
             <div>
