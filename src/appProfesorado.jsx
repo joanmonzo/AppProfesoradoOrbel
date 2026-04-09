@@ -7,7 +7,7 @@ const initialForm = {
   nombre: "",
   titulacion: "Todas", categoriaTitulacion: "Todas",
   curso: "Todos", localidad: "Todas",
-  experiencia_anio: "", experiencia_horas: "", precioMax: "", sexo: "Todos",
+  precioMax: "", sexo: "Todos",
   trabajado_con_orbel: "Todos",
   certificado_docencia: "Todos",
 };
@@ -138,8 +138,6 @@ export default function TutorConnect() {
         const matchCurso = form.curso === "Todos" || form.curso === "" || (t.cursos && (Array.isArray(t.cursos) ? t.cursos : t.cursos.split(",").map(c => c.trim())).some(c => c.toLowerCase().includes(form.curso.toLowerCase())));
         const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.trim() === form.localidad.trim());
         const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toUpperCase().trim() === form.sexo);
-        const matchExpAnio = form.experiencia_anio === "" || Number(t.experiencia_anio) >= Number(form.experiencia_anio);
-        const matchExpHoras = form.experiencia_horas === "" || Number(t.experiencia_horas) >= Number(form.experiencia_horas);
 
         const matchPrecio = form.precioMax === "" || (() => {
           const input = form.precioMax.trim();
@@ -169,7 +167,7 @@ export default function TutorConnect() {
 
         const matchNombre = form.nombre === "" || String(t.nombre || t.name || "").toLowerCase().includes(form.nombre.toLowerCase());
 
-        return matchNombre && matchCategoria && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio && matchOrbel && matchCertDocencia;
+        return matchNombre && matchCategoria && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchPrecio && matchOrbel && matchCertDocencia;
       });
 
       setResults(filtered);
@@ -201,7 +199,6 @@ export default function TutorConnect() {
       const pB = getNumericPrice(b.precio) === Infinity ? 0 : getNumericPrice(b.precio);
       return pB - pA;
     }
-    if (sortBy === "expDesc") return Number(b.experiencia_anio || 0) - Number(a.experiencia_anio || 0);
     if (sortBy === "nombreAsc") return String(a.nombre || a.name || "").localeCompare(String(b.nombre || b.name || ""));
     return 0;
   }) : null;
@@ -328,7 +325,6 @@ export default function TutorConnect() {
                   <option value="default">Relevancia</option>
                   <option value="precioAsc">Precio: más barato</option>
                   <option value="precioDesc">Precio: más caro</option>
-                  <option value="expDesc">Mayor experiencia</option>
                   <option value="nombreAsc">Nombre (A-Z)</option>
                 </select>
               </div>
@@ -386,7 +382,6 @@ export default function TutorConnect() {
                           { label: "Titulación", value: t.titulacion, icon: "🎓" },
                           { label: "Localidad", value: t.localidad, icon: "📍" },
                           { label: "Sexo", value: t.sexo, icon: "👤" },
-                          { label: "Experiencia", value: (t.experiencia_anio != null && t.experiencia_horas != null) ? `${t.experiencia_anio} años y ${t.experiencia_horas} horas` : null, icon: "⏱" },
                           { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
                           { label: "Precio", value: t.precio ? `${t.precio} €` : null, icon: "💰" },
                           { label: "Ha trabajado en Orbel", value: t.trabajado_con_orbel, icon: "🏢" },
