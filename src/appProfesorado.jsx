@@ -214,7 +214,7 @@ export default function TutorConnect() {
     <div className="app-container">
       {/* Botón de Tema */}
       <button className="theme-toggle" onClick={toggleTheme} title="Cambiar tema">
-        {theme === 'light' ? '🌙' : '☀️'}
+        {theme === 'light' ? '☀️' : '🌙'}
       </button>
 
       {/* Cabecera */}
