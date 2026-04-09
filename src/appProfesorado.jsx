@@ -1,64 +1,122 @@
 import { useState, useEffect } from "react";
-const API_URL = "https://script.google.com/macros/s/AKfycbwgCM-LjBMtEc_LwK7Gs7D6yfZ97niXebD3fGeSFmd18vTWQR7UY61ui-rMuB-nH_En/exec?action=todos";
 
-const initialForm = {
-  titulacion: "Todas",
-  curso: "Todos",
-  localidad: "Todas",
-  experiencia_anio: "",
-  experiencia_horas: "",
-  precioMax: "",
-  sexo: "Todos",
+const API_URL = "https://script.google.com/macros/s/AKfycbwgCM-LjBMtEc_LwK7Gs7D6yfZ97niXebD3fGeSFmd18vTWQR7UY61ui-rMuB-nH_En/exec";
+
+// ==========================================
+// ESTILOS REUTILIZABLES
+// ==========================================
+const styles = {
+  label: {
+    display: "block", fontSize: 12, fontWeight: 600, color: "#6b7280",
+    textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
+  },
+  input: {
+    width: "100%", border: "1px solid #e5e7eb", borderRadius: 8,
+    padding: "10px 12px", fontSize: 14, color: "#374151",
+    background: "#fff", fontFamily: "inherit",
+  },
+  btnSearch: {
+    width: "100%", marginTop: 24, padding: "14px 0", border: "none", borderRadius: 10,
+    fontSize: 15, fontWeight: 600, fontFamily: "inherit", letterSpacing: "0.02em",
+    transition: "background 0.15s", color: "#fff",
+  },
+  card: (isExpanded) => ({
+    background: "#fff",
+    border: isExpanded ? "2px solid #111" : "1px solid #e5e7eb",
+    borderRadius: 12,
+    padding: "20px 24px",
+    boxShadow: isExpanded ? "0 4px 12px rgba(0,0,0,0.1)" : "0 1px 6px rgba(0,0,0,0.05)",
+    cursor: "pointer",
+    transition: "all 0.2s ease"
+  })
 };
 
+const initialForm = {
+  titulacion: "Todas", curso: "Todos", localidad: "Todas",
+  experiencia_anio: "", experiencia_horas: "", precioMax: "", sexo: "Todos",
+};
+
+// ==========================================
+// COMPONENTES SECUNDARIOS
+// ==========================================
+const PaginationControls = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  if (totalItems <= itemsPerPage) return null;
+
+  const btnStyle = (disabled) => ({
+    padding: "8px 16px", background: disabled ? "#e5e7eb" : "#111",
+    color: disabled ? "#9ca3af" : "#fff", border: "none", borderRadius: 8,
+    cursor: disabled ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 600,
+  });
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: 24, gap: 16 }}>
+      <button 
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))} 
+        disabled={currentPage === 1} 
+        style={btnStyle(currentPage === 1)}
+      >
+        Anterior
+      </button>
+      <div style={{ fontSize: 14, color: "#374151" }}>
+        Página <strong>{currentPage}</strong> de {totalPages}
+      </div>
+      <button 
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} 
+        disabled={currentPage === totalPages} 
+        style={btnStyle(currentPage === totalPages)}
+      >
+        Siguiente
+      </button>
+    </div>
+  );
+};
+
+// ==========================================
+// COMPONENTE PRINCIPAL
+// ==========================================
 export default function TutorConnect() {
+  // Estado General
   const [form, setForm] = useState(initialForm);
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Estado de Opciones y Paginación
   const [titulaciones, setTitulaciones] = useState([]);
   const [cursosDisponibles, setCursosDisponibles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const itemsPerPage = 5;
 
-  useEffect(() => {
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        const tits = [...new Set(data.map(p => p.titulacion).filter(Boolean))];
-        setTitulaciones(tits);
-
-        const cursos = [...new Set(
-          data.flatMap(p =>
-            p.cursos
-              ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim()))
-              : []
-          ).filter(Boolean)
-        )];
-        setCursosDisponibles(cursos);
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleChange = e => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
+  // Estado de Observaciones
   const [observaciones, setObservaciones] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [saveStatus, setSaveStatus] = useState({});
 
+  // Carga inicial de filtros desde la API
+  useEffect(() => {
+    fetch(`${API_URL}?action=todos`)
+      .then(res => res.json())
+      .then(data => {
+        setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))]);
+        setCursosDisponibles([...new Set(
+          data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : [])
+        ).filter(Boolean)]);
+      }).catch(() => {});
+  }, []);
+
+  const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  // Acción para guardar observaciones
   const handleGuardar = async (id) => {
     setSavingId(id);
     setSaveStatus(prev => ({ ...prev, [id]: null }));
     try {
       const texto = observaciones[id] || "";
-      const query = new URLSearchParams({ action: "observaciones", id: id, observaciones: texto, observacion: texto }).toString();
-      const res = await fetch(`https://script.google.com/macros/s/AKfycbwgCM-LjBMtEc_LwK7Gs7D6yfZ97niXebD3fGeSFmd18vTWQR7UY61ui-rMuB-nH_En/exec?` + query, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: texto,
+      const query = new URLSearchParams({ action: "observaciones", id, observaciones: texto, observacion: texto }).toString();
+      const res = await fetch(`${API_URL}?${query}`, {
+        method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: texto,
       });
       if (!res.ok) throw new Error();
       setSaveStatus(prev => ({ ...prev, [id]: "ok" }));
@@ -69,39 +127,42 @@ export default function TutorConnect() {
     }
   };
 
+  // Acción de filtrado en el cliente
   const handleSearch = async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(`${API_URL}?action=todos`);
       if (!res.ok) throw new Error("Error al conectar con la API");
       const data = await res.json();
 
-      const filtered = data.filter(t =>
-        (form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && t.titulacion.toLowerCase().includes(form.titulacion.toLowerCase()))) &&
-        (form.curso === "Todos" || form.curso === "" || (t.cursos && (Array.isArray(t.cursos) ? t.cursos : t.cursos.split(",").map(c => c.trim())).some(c => c.toLowerCase().includes(form.curso.toLowerCase())))) &&
-        (form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.toLowerCase().includes(form.localidad.toLowerCase()))) &&
-        (form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toLowerCase().includes(form.sexo.toLowerCase()))) &&
-        (form.experiencia_anio === "" || Number(t.experiencia_anio) >= Number(form.experiencia_anio)) &&
-        (form.experiencia_horas === "" || Number(t.experiencia_horas) >= Number(form.experiencia_horas)) &&
-        (form.precioMax === "" || (() => {
+      const filtered = data.filter(t => {
+        const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && t.titulacion.toLowerCase().includes(form.titulacion.toLowerCase()));
+        const matchCurso = form.curso === "Todos" || form.curso === "" || (t.cursos && (Array.isArray(t.cursos) ? t.cursos : t.cursos.split(",").map(c => c.trim())).some(c => c.toLowerCase().includes(form.curso.toLowerCase())));
+        const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.toLowerCase().includes(form.localidad.toLowerCase()));
+        const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toLowerCase().includes(form.sexo.toLowerCase()));
+        const matchExpAnio = form.experiencia_anio === "" || Number(t.experiencia_anio) >= Number(form.experiencia_anio);
+        const matchExpHoras = form.experiencia_horas === "" || Number(t.experiencia_horas) >= Number(form.experiencia_horas);
+        
+        const matchPrecio = form.precioMax === "" || (() => {
           const input = form.precioMax.trim();
           const precioProfesor = String(t.precio).trim();
-          const esRangoProfesor = precioProfesor.includes("-");
-          const [pMin, pMax] = esRangoProfesor
-            ? precioProfesor.split("-").map(v => Number(v.trim()))
-            : [Number(precioProfesor), Number(precioProfesor)];
+          const esRango = precioProfesor.includes("-");
+          const [pMin, pMax] = esRango ? precioProfesor.split("-").map(v => Number(v.trim())) : [Number(precioProfesor), Number(precioProfesor)];
+          
           if (input.includes("-")) {
             const [bMin, bMax] = input.split("-").map(v => Number(v.trim()));
             return pMin <= bMax && pMax >= bMin;
           }
           const bNum = Number(input);
           return pMin === bNum || pMax === bNum;
-        })())
-      );
+        })();
+
+        return matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio;
+      });
 
       setResults(filtered);
       setCurrentPage(1);
+      
       const obs = {};
       filtered.forEach(t => { obs[t.id] = t.observaciones ?? ""; });
       setObservaciones(obs);
@@ -110,27 +171,6 @@ export default function TutorConnect() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const labelStyle = {
-    display: "block",
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    marginBottom: 6,
-  };
-
-  const inputStyle = {
-    width: "100%",
-    border: "1px solid #e5e7eb",
-    borderRadius: 8,
-    padding: "10px 12px",
-    fontSize: 14,
-    color: "#374151",
-    background: "#fff",
-    fontFamily: "inherit",
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -147,320 +187,168 @@ export default function TutorConnect() {
       `}</style>
 
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "60px 24px" }}>
-
-        {/* Título */}
+        
+        {/* Cabecera */}
         <div style={{ marginBottom: 36, textAlign: "center" }}>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#111", marginBottom: 8 }}>
-            Buscar Profesores
-          </h1>
-          <p style={{ fontSize: 15, color: "#6b7280" }}>
-            Usa los filtros para encontrar el profesor ideal
-          </p>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#111", marginBottom: 8 }}>Buscar Profesores</h1>
+          <p style={{ fontSize: 15, color: "#6b7280" }}>Usa los filtros para encontrar el profesor ideal</p>
         </div>
 
-        {/* Formulario */}
-        <div style={{
-          background: "#fff",
-          borderRadius: 16,
-          border: "1px solid #e5e7eb",
-          padding: "32px",
-          marginBottom: 32,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-        }}>
+        {/* Panel de Filtros */}
+        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e5e7eb", padding: "32px", marginBottom: 32, boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-
-            {/* Titulación con datalist */}
             <div>
-              <label style={labelStyle}>Titulación</label>
-              <input
-                type="text"
-                name="titulacion"
-                value={form.titulacion === "Todas" ? "" : form.titulacion}
-                onChange={handleChange}
-                list="titulaciones-list"
-                style={inputStyle}
-              />
-              <datalist id="titulaciones-list">
-                {titulaciones.map(t => (
-                  <option key={t} value={t} />
-                ))}
-              </datalist>
+              <label style={styles.label}>Titulación</label>
+              <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" style={styles.input} />
+              <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
             </div>
-
-            {/* Curso - desplegable */}
             <div>
-              <label style={labelStyle}>Curso</label>
-              <select name="curso" value={form.curso} onChange={handleChange} style={inputStyle}>
+              <label style={styles.label}>Curso</label>
+              <select name="curso" value={form.curso} onChange={handleChange} style={styles.input}>
                 <option value="Todos">Todos</option>
-                {cursosDisponibles.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+                {cursosDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-
-            {/* Localidad */}
             <div>
-              <label style={labelStyle}>Localidad</label>
-              <input type="text" name="localidad" value={form.localidad === "Todas" ? "" : form.localidad} onChange={handleChange} style={inputStyle} />
+              <label style={styles.label}>Localidad</label>
+              <input type="text" name="localidad" value={form.localidad === "Todas" ? "" : form.localidad} onChange={handleChange} style={styles.input} />
             </div>
-
-            {/* Sexo */}
             <div>
-              <label style={labelStyle}>Sexo</label>
-              <input type="text" name="sexo" value={form.sexo === "Todos" ? "" : form.sexo} onChange={handleChange} style={inputStyle} />
+              <label style={styles.label}>Sexo</label>
+              <input type="text" name="sexo" value={form.sexo === "Todos" ? "" : form.sexo} onChange={handleChange} style={styles.input} />
             </div>
-
-            {/* Experiencia años */}
             <div>
-              <label style={labelStyle}>Experiencia (años)</label>
-              <input
-                type="number"
-                name="experiencia_anio"
-                value={form.experiencia_anio}
-                onChange={handleChange}
-                min={0}
-                style={inputStyle}
-              />
+              <label style={styles.label}>Experiencia (años)</label>
+              <input type="number" name="experiencia_anio" value={form.experiencia_anio} onChange={handleChange} min={0} style={styles.input} />
             </div>
-
-            {/* Experiencia horas */}
             <div>
-              <label style={labelStyle}>Experiencia (horas)</label>
-              <input
-                type="number"
-                name="experiencia_horas"
-                value={form.experiencia_horas}
-                onChange={handleChange}
-                min={0}
-                style={inputStyle}
-              />
+              <label style={styles.label}>Experiencia (horas)</label>
+              <input type="number" name="experiencia_horas" value={form.experiencia_horas} onChange={handleChange} min={0} style={styles.input} />
             </div>
-
-            {/* Precio */}
             <div>
-              <label style={labelStyle}>Precio</label>
-              <input
-                type="text"
-                name="precioMax"
-                value={form.precioMax}
-                onChange={handleChange}
-                style={inputStyle}
-              />
+              <label style={styles.label}>Precio</label>
+              <input type="text" name="precioMax" value={form.precioMax} onChange={handleChange} style={styles.input} />
             </div>
           </div>
 
-          {/* Botón buscar */}
-          <button
-            onClick={handleSearch}
-            disabled={loading}
-            style={{
-              width: "100%",
-              marginTop: 24,
-              background: loading ? "#f87171" : "#dc2626",
-              color: "#fff",
-              border: "none",
-              borderRadius: 10,
-              padding: "14px 0",
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-              fontFamily: "inherit",
-              letterSpacing: "0.02em",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={e => { if (!loading) e.target.style.background = "#b91c1c"; }}
-            onMouseLeave={e => { if (!loading) e.target.style.background = "#dc2626"; }}
+          <button 
+            onClick={handleSearch} 
+            disabled={loading} 
+            style={{ ...styles.btnSearch, background: loading ? "#f87171" : "#dc2626", cursor: loading ? "not-allowed" : "pointer" }} 
+            onMouseEnter={e => !loading && (e.target.style.background = "#b91c1c")} 
+            onMouseLeave={e => !loading && (e.target.style.background = "#dc2626")}
           >
             {loading ? "Buscando..." : "Buscar profesores"}
           </button>
         </div>
 
-        {/* Error */}
+        {/* Mensaje de Error */}
         {error && (
-          <div style={{
-            background: "#fef2f2", border: "1px solid #fecaca",
-            borderRadius: 10, padding: "14px 18px", marginBottom: 20,
-            fontSize: 14, color: "#b91c1c",
-          }}>
+          <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "14px 18px", marginBottom: 20, fontSize: 14, color: "#b91c1c" }}>
             ⚠️ {error}
           </div>
         )}
 
-        {/* Resultados */}
+        {/* Área de Resultados */}
         {results !== null && !error && (
           <div>
             <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
-              {results.length > 0
-                ? <>Se encontraron <strong style={{ color: "#111" }}>{results.length}</strong> profesor{results.length !== 1 ? "es" : ""}</>
-                : "No se encontraron profesores con esos criterios."}
+              {results.length > 0 ? <>Se encontraron <strong style={{ color: "#111" }}>{results.length}</strong> profesor{results.length !== 1 ? "es" : ""}</> : "No se encontraron profesores con esos criterios."}
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {currentResults.map((t, i) => {
                 const isExpanded = expandedId === t.id;
                 return (
-                <div key={t.id || i} style={{
-                  background: "#fff",
-                  border: isExpanded ? "2px solid #111" : "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "20px 24px",
-                  boxShadow: isExpanded ? "0 4px 12px rgba(0,0,0,0.1)" : "0 1px 6px rgba(0,0,0,0.05)",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease"
-                }}
-                onClick={() => setExpandedId(isExpanded ? null : t.id)}
-                >
-                  {/* Nombre y precio */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isExpanded ? 16 : 0 }}>
-                    <div>
-                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#111", display: "flex", alignItems: "center", gap: 8 }}>
-                        {t.nombre || t.name}
-                        <span style={{ fontSize: 12, color: "#6b7280", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-                          ▼
-                        </span>
+                  <div key={t.id || i} style={styles.card(isExpanded)} onClick={() => setExpandedId(isExpanded ? null : t.id)}>
+                    
+                    {/* Tarjeta contraída: Nombre y breve resumen */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isExpanded ? 16 : 0 }}>
+                      <div>
+                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#111", display: "flex", alignItems: "center", gap: 8 }}>
+                          {t.nombre || t.name}
+                          <span style={{ fontSize: 12, color: "#6b7280", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
+                        </div>
+                        {!isExpanded && t.titulacion && (
+                          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>🎓 {t.titulacion} • 📍 {t.localidad || "Sin localidad"}</div>
+                        )}
                       </div>
-                      {!isExpanded && t.titulacion && (
-                        <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>🎓 {t.titulacion} • 📍 {t.localidad || "Sin localidad"}</div>
+                      {t.precio && (
+                        <div style={{ textAlign: "right", fontSize: 20, fontWeight: 700, color: "#111" }}>{t.precio}€</div>
                       )}
                     </div>
-                    {t.precio && (
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 20, fontWeight: 700, color: "#111" }}>{t.precio}€</div>
+
+                    {/* Tarjeta expandida: Detalles y Notas */}
+                    {isExpanded && (
+                      <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          {[
+                            { label: "Titulación", value: t.titulacion, icon: "🎓" },
+                            { label: "Localidad", value: t.localidad, icon: "📍" },
+                            { label: "Sexo", value: t.sexo, icon: "👤" },
+                            { label: "Experiencia", value: (t.experiencia_anio != null && t.experiencia_horas != null) ? `${t.experiencia_anio} años y ${t.experiencia_horas} horas` : null, icon: "⏱" },
+                            { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
+                          ].map(({ label, value, icon }) => value != null && value !== "" && (
+                            <div key={label} style={{ background: "#f9fafb", borderRadius: 8, padding: "10px 12px" }}>
+                              <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
+                                {icon} {label}
+                              </div>
+                              <div style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>{value}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Caja de Observaciones */}
+                        <div style={{ marginTop: 14 }}>
+                          <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
+                            📝 Observaciones
+                          </div>
+                          <textarea
+                            value={observaciones[t.id] ?? ""}
+                            onChange={e => setObservaciones(prev => ({ ...prev, [t.id]: e.target.value }))}
+                            placeholder="Escribe una observación..."
+                            rows={3}
+                            style={{ ...styles.input, resize: "vertical", background: "#f9fafb" }}
+                          />
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                            <button
+                              onClick={() => handleGuardar(t.id)}
+                              disabled={savingId === t.id}
+                              style={{
+                                background: savingId === t.id ? "#9ca3af" : "#111",
+                                color: "#fff", border: "none", borderRadius: 8, padding: "8px 20px",
+                                fontSize: 13, fontWeight: 600, cursor: savingId === t.id ? "not-allowed" : "pointer",
+                                fontFamily: "inherit", transition: "background 0.15s",
+                              }}
+                              onMouseEnter={e => savingId !== t.id && (e.target.style.background = "#333")}
+                              onMouseLeave={e => savingId !== t.id && (e.target.style.background = "#111")}
+                            >
+                              {savingId === t.id ? "Guardando..." : "Guardar"}
+                            </button>
+                            {saveStatus[t.id] === "ok" && <span style={{ fontSize: 12, color: "#16a34a" }}>✅ Guardado</span>}
+                            {saveStatus[t.id] === "error" && <span style={{ fontSize: 12, color: "#dc2626" }}>❌ Error</span>}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  {isExpanded && (
-                    <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
-                      {/* Campos en grid */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    {[
-                      { label: "Titulación", value: t.titulacion, icon: "🎓" },
-                      { label: "Localidad", value: t.localidad, icon: "📍" },
-                      { label: "Sexo", value: t.sexo, icon: "👤" },
-                      { label: "Experiencia", value: (t.experiencia_anio != null && t.experiencia_horas != null) ? `${t.experiencia_anio} años y ${t.experiencia_horas} horas` : null, icon: "⏱" },
-                      { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
-                    ].map(({ label, value, icon }) => value != null && value !== "" && (
-                      <div key={label} style={{
-                        background: "#f9fafb", borderRadius: 8,
-                        padding: "10px 12px",
-                      }}>
-                        <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
-                          {icon} {label}
-                        </div>
-                        <div style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>
-                          {value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Observaciones */}
-                  <div style={{ marginTop: 14 }}>
-                    <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
-                      📝 Observaciones
-                    </div>
-                    <textarea
-                      value={observaciones[t.id] ?? ""}
-                      onChange={e => setObservaciones(prev => ({ ...prev, [t.id]: e.target.value }))}
-                      placeholder="Escribe una observación..."
-                      rows={3}
-                      style={{
-                        width: "100%", border: "1px solid #e5e7eb", borderRadius: 8,
-                        padding: "10px 12px", fontSize: 13, color: "#374151",
-                        fontFamily: "inherit", resize: "vertical", background: "#f9fafb",
-                      }}
-                    />
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
-                      <button
-                        onClick={() => handleGuardar(t.id)}
-                        disabled={savingId === t.id}
-                        style={{
-                          background: savingId === t.id ? "#9ca3af" : "#111",
-                          color: "#fff", border: "none", borderRadius: 8,
-                          padding: "8px 20px", fontSize: 13, fontWeight: 600,
-                          cursor: savingId === t.id ? "not-allowed" : "pointer",
-                          fontFamily: "inherit", transition: "background 0.15s",
-                        }}
-                        onMouseEnter={e => { if (savingId !== t.id) e.target.style.background = "#333"; }}
-                        onMouseLeave={e => { if (savingId !== t.id) e.target.style.background = "#111"; }}
-                      >
-                        {savingId === t.id ? "Guardando..." : "Guardar"}
-                      </button>
-                      {saveStatus[t.id] === "ok" && (
-                        <span style={{ fontSize: 12, color: "#16a34a" }}>✅ Guardado correctamente</span>
-                      )}
-                      {saveStatus[t.id] === "error" && (
-                        <span style={{ fontSize: 12, color: "#dc2626" }}>❌ Error al guardar</span>
-                      )}
-                    </div>
-                  </div>
-                    </div>
-                  )}
-                </div>
                 );
               })}
             </div>
 
-            {/* Controles de paginación */}
-            {results.length > itemsPerPage && (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: 24, gap: 16 }}>
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  style={{
-                    padding: "8px 16px",
-                    background: currentPage === 1 ? "#e5e7eb" : "#111",
-                    color: currentPage === 1 ? "#9ca3af" : "#fff",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
-                    fontWeight: 600,
-                  }}
-                >
-                  Anterior
-                </button>
-                <div style={{ fontSize: 14, color: "#374151" }}>
-                  Página <strong>{currentPage}</strong> de {Math.ceil(results.length / itemsPerPage)}
-                </div>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / itemsPerPage), p + 1))}
-                  disabled={currentPage === Math.ceil(results.length / itemsPerPage)}
-                  style={{
-                    padding: "8px 16px",
-                    background: currentPage === Math.ceil(results.length / itemsPerPage) ? "#e5e7eb" : "#111",
-                    color: currentPage === Math.ceil(results.length / itemsPerPage) ? "#9ca3af" : "#fff",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: currentPage === Math.ceil(results.length / itemsPerPage) ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
-                    fontWeight: 600,
-                  }}
-                >
-                  Siguiente
-                </button>
-              </div>
-            )}
+            {/* Paginación (Componente Externo) */}
+            <PaginationControls
+              currentPage={currentPage}
+              totalItems={results.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <footer style={{
-        borderTop: "1px solid #e5e7eb",
-        marginTop: 60,
-        padding: "32px 24px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#fff",
-      }}>
-        <img
-          src="/logo-academia.jpeg"
-          alt="Academia Industrial by Orbel grupo"
-          style={{ height: 56, objectFit: "contain", opacity: 0.85 }}
-        />
+      <footer style={{ borderTop: "1px solid #e5e7eb", marginTop: 60, padding: "32px 24px", display: "flex", justifyContent: "center", alignItems: "center", background: "#fff" }}>
+        <img src="/logo-academia.jpeg" alt="Academia Industrial by Orbel grupo" style={{ height: 56, objectFit: "contain", opacity: 0.85 }} />
       </footer>
     </div>
   );
