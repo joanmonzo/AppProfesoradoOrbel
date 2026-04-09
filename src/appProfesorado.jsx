@@ -36,6 +36,7 @@ const initialForm = {
   titulacion: "Todas", curso: "Todos", localidad: "Todas",
   experiencia_anio: "", experiencia_horas: "", precioMax: "", sexo: "Todos",
   trabajado_con_orbel: "Todos",
+  certificado_docencia: "Todos",
 };
 
 // ==========================================
@@ -104,8 +105,8 @@ export default function TutorConnect() {
       .then(data => {
         setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))]);
         setCursosDisponibles([...new Set(
-          data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : [])
-        ).filter(Boolean)]);
+          data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : []).filter(Boolean)
+        )].sort());
       }).catch(() => { });
   }, []);
 
@@ -166,9 +167,15 @@ export default function TutorConnect() {
           return form.trabajado_con_orbel === "Sí" ? !isNo : isNo;
         })();
 
+        const matchCertDocencia = form.certificado_docencia === "Todos" || (() => {
+          const val = String(t.certificado_docencia || "").toLowerCase().trim();
+          const isNo = val === "no" || val === "";
+          return form.certificado_docencia === "Sí" ? !isNo : isNo;
+        })();
+
         const matchNombre = form.nombre === "" || String(t.nombre || t.name || "").toLowerCase().includes(form.nombre.toLowerCase());
 
-        return matchNombre && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio && matchOrbel;
+        return matchNombre && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio && matchOrbel && matchCertDocencia;
       });
 
       setResults(filtered);
@@ -235,7 +242,11 @@ export default function TutorConnect() {
             </div>
             <div>
               <label style={styles.label}>Sexo</label>
-              <input type="text" name="sexo" value={form.sexo === "Todos" ? "" : form.sexo} onChange={handleChange} style={styles.input} />
+              <select name="sexo" value={form.sexo} onChange={handleChange} style={styles.input}>
+                <option value="Todos">Todos</option>
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+              </select>
             </div>
             <div>
               <label style={styles.label}>Curso</label>
@@ -257,6 +268,14 @@ export default function TutorConnect() {
               </select>
             </div>
             <div>
+              <label style={styles.label}>Cert. Docencia</label>
+              <select name="certificado_docencia" value={form.certificado_docencia} onChange={handleChange} style={styles.input}>
+                <option value="Todos">Todos</option>
+                <option value="Sí">Sí</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
               <label style={styles.label}>Titulación</label>
               <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" style={styles.input} />
               <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
@@ -370,6 +389,7 @@ export default function TutorConnect() {
                             { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
                             { label: "Precio", value: t.precio ? `${t.precio} €` : null, icon: "💰" },
                             { label: "Ha trabajado en Orbel", value: t.trabajado_con_orbel, icon: "🏢" },
+                            { label: "Certificado Docencia (SSCE0110)", value: t.certificado_docencia, icon: "📜" },
                           ].map(({ label, value, icon }) => value != null && value !== "" && (
                             <div key={label} style={{ background: "#f9fafb", borderRadius: 8, padding: "10px 12px" }}>
                               <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
