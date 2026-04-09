@@ -33,7 +33,8 @@ const styles = {
 
 const initialForm = {
   nombre: "",
-  titulacion: "Todas", curso: "Todos", localidad: "Todas",
+  titulacion: "Todas", categoriaTitulacion: "Todas",
+  curso: "Todos", localidad: "Todas",
   experiencia_anio: "", experiencia_horas: "", precioMax: "", sexo: "Todos",
   trabajado_con_orbel: "Todos",
   certificado_docencia: "Todos",
@@ -88,6 +89,7 @@ export default function TutorConnect() {
   // Estado de Opciones y Paginación
   const [titulaciones, setTitulaciones] = useState([]);
   const [cursosDisponibles, setCursosDisponibles] = useState([]);
+  const [localidades, setLocalidades] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const [sortBy, setSortBy] = useState("default");
@@ -103,10 +105,11 @@ export default function TutorConnect() {
     fetch(`${API_URL}?action=todos`)
       .then(res => res.json())
       .then(data => {
-        setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))]);
+        setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))].sort());
         setCursosDisponibles([...new Set(
           data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : []).filter(Boolean)
         )].sort());
+        setLocalidades([...new Set(data.map(p => p.localidad).filter(Boolean))].sort());
       }).catch(() => { });
   }, []);
 
@@ -140,9 +143,27 @@ export default function TutorConnect() {
       const data = await res.json();
 
       const filtered = data.filter(t => {
+        const CATEGORIA_KEYWORDS = {
+          "FP": ["fp", "formación profesional", "grado medio", "grado superior", "ciclo formativo", "fpb", "fp1", "fp2", "fp i", "fp ii", "técnico superior", "técnico especialista", "técnico auxiliar", "técnico en", "técnico medio"],
+          "Universidad": ["grado en", "grado universitario", "graduado", "graduada", "licenciatura", "licenciado", "licenciada", "ingeniería", "ingeniero", "ingenieria", "arquitectura"],
+          "Máster": ["máster", "master", "máster universitario"],
+          "Formador": ["formador", "docencia", "pedagogía", "pedagogo", "magister"],
+          "Sin titulación": ["sin titulacion", "no indica", "sin titulación"],
+          "Otro": [],
+        };
+        const matchCategoria = form.categoriaTitulacion === "Todas" || (() => {
+          const tit = String(t.titulacion || "").toLowerCase();
+          const keywords = CATEGORIA_KEYWORDS[form.categoriaTitulacion];
+          if (!keywords) return true;
+          if (keywords.length === 0) {
+            // "Otro": no encaja en ninguna categoría conocida
+            return !Object.entries(CATEGORIA_KEYWORDS).filter(([k]) => k !== "Otro").some(([, kws]) => kws.some(kw => tit.includes(kw)));
+          }
+          return keywords.some(kw => tit.includes(kw));
+        })();
         const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && t.titulacion.toLowerCase().includes(form.titulacion.toLowerCase()));
         const matchCurso = form.curso === "Todos" || form.curso === "" || (t.cursos && (Array.isArray(t.cursos) ? t.cursos : t.cursos.split(",").map(c => c.trim())).some(c => c.toLowerCase().includes(form.curso.toLowerCase())));
-        const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.toLowerCase().includes(form.localidad.toLowerCase()));
+        const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.trim() === form.localidad.trim());
         const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toUpperCase().trim() === form.sexo);
         const matchExpAnio = form.experiencia_anio === "" || Number(t.experiencia_anio) >= Number(form.experiencia_anio);
         const matchExpHoras = form.experiencia_horas === "" || Number(t.experiencia_horas) >= Number(form.experiencia_horas);
@@ -175,7 +196,7 @@ export default function TutorConnect() {
 
         const matchNombre = form.nombre === "" || String(t.nombre || t.name || "").toLowerCase().includes(form.nombre.toLowerCase());
 
-        return matchNombre && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio && matchOrbel && matchCertDocencia;
+        return matchNombre && matchCategoria && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchExpAnio && matchExpHoras && matchPrecio && matchOrbel && matchCertDocencia;
       });
 
       setResults(filtered);
@@ -257,7 +278,10 @@ export default function TutorConnect() {
             </div>
             <div>
               <label style={styles.label}>Localidad</label>
-              <input type="text" name="localidad" value={form.localidad === "Todas" ? "" : form.localidad} onChange={handleChange} style={styles.input} />
+              <select name="localidad" value={form.localidad} onChange={handleChange} style={styles.input}>
+                <option value="Todas">Todas</option>
+                {localidades.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
             </div>
             <div>
               <label style={styles.label}>Trabajó en Orbel</label>
@@ -275,9 +299,22 @@ export default function TutorConnect() {
                 <option value="No">No</option>
               </select>
             </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={styles.label}>Titulación</label>
-              <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" style={styles.input} />
+            {/* Titulación: categoría + texto libre */}
+            <div>
+              <label style={styles.label}>Categoría Titulación</label>
+              <select name="categoriaTitulacion" value={form.categoriaTitulacion} onChange={handleChange} style={styles.input}>
+                <option value="Todas">Todas</option>
+                <option value="FP">FP / Técnico</option>
+                <option value="Universidad">Grado / Licenciatura / Ingeniería</option>
+                <option value="Máster">Máster</option>
+                <option value="Formador">Formador / Pedagogía</option>
+                <option value="Sin titulación">Sin titulación</option>
+                <option value="Otro">Otra / No clasificada</option>
+              </select>
+            </div>
+            <div>
+              <label style={styles.label}>Titulación (texto libre)</label>
+              <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" style={styles.input} placeholder="Buscar en titulación..." />
               <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
             </div>
           </div>
