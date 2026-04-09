@@ -309,7 +309,7 @@ export default function TutorConnect() {
                 <option value="Máster">Máster</option>
                 <option value="Formador">Formador / Pedagogía</option>
                 <option value="Sin titulación">Sin titulación</option>
-                <option value="Otro">Otra / No clasificada</option>
+                <option value="Otro">Otra</option>
               </select>
             </div>
             <div>
