@@ -192,6 +192,17 @@ export default function TutorConnect() {
     return Number(str) || Infinity;
   };
 
+  const getScore = (t) => {
+    let s = 0;
+    const hasDocencia = String(t.certificado_docencia || "").toLowerCase().trim();
+    if (hasDocencia !== "no" && hasDocencia !== "") s += 100;
+    const hasTeleform = String(t.certificado_teleformacion || "").toLowerCase().trim();
+    if (hasTeleform !== "no" && hasTeleform !== "") s += 50;
+    const workedOrbel = String(t.trabajado_con_orbel || "").toLowerCase().trim();
+    if (workedOrbel !== "no" && workedOrbel !== "") s += 30;
+    return s;
+  };
+
   const sortedResults = results ? [...results].sort((a, b) => {
     if (sortBy === "precioAsc") return getNumericPrice(a.precio) - getNumericPrice(b.precio);
     if (sortBy === "precioDesc") {
@@ -200,8 +211,10 @@ export default function TutorConnect() {
       return pB - pA;
     }
     if (sortBy === "nombreAsc") return String(a.nombre || a.name || "").localeCompare(String(b.nombre || b.name || ""));
+    if (sortBy === "nombreDesc") return String(b.nombre || b.name || "").localeCompare(String(a.nombre || a.name || ""));
     if (sortBy === "localidadAsc") return String(a.localidad || "").localeCompare(String(b.localidad || ""));
-    return 0;
+    if (sortBy === "localidadDesc") return String(b.localidad || "").localeCompare(String(a.localidad || ""));
+    return getScore(b) - getScore(a);
   }) : null;
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -329,11 +342,13 @@ export default function TutorConnect() {
                   className="input"
                   style={{ padding: "6px 10px", width: "auto", fontSize: 13, paddingRight: 30 }}
                 >
-                  <option value="default">Relevancia</option>
+                  <option value="default">Relevancia (Certificados)</option>
                   <option value="precioAsc">Precio: menor a mayor</option>
                   <option value="precioDesc">Precio: mayor a menor</option>
                   <option value="nombreAsc">Nombre (A-Z)</option>
+                  <option value="nombreDesc">Nombre (Z-A)</option>
                   <option value="localidadAsc">Ubicación (A-Z)</option>
+                  <option value="localidadDesc">Ubicación (Z-A)</option>
                 </select>
               </div>
             )}
