@@ -451,7 +451,7 @@ export default function TutorConnect() {
       )}
 
       <footer className="footer">
-        <img src="/logo-academia.jpeg" alt="Academia Industrial by Orbel grupo" />
+        <img src={theme === 'light' ? "/logo-academia.jpeg" : "/logo-academia-dark.png"} alt="Academia Industrial by Orbel grupo" />
       </footer>
     </div>
   );

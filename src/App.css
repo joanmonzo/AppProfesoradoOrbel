@@ -269,8 +269,5 @@ select {
 
 [data-theme='dark'] .footer img {
   filter: none;
-  background: white;
-  padding: 8px 16px;
-  border-radius: 8px;
   opacity: 1;
 }
