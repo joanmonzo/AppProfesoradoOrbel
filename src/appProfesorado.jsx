@@ -134,7 +134,7 @@ export default function TutorConnect() {
           }
           return keywords.some(kw => tit.includes(kw));
         })();
-        const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && t.titulacion.toLowerCase().includes(form.titulacion.toLowerCase()));
+        const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && String(t.titulacion).toLowerCase().includes(form.titulacion.toLowerCase()));
         const matchCurso = form.curso === "Todos" || form.curso === "" || (t.cursos && (Array.isArray(t.cursos) ? t.cursos : t.cursos.split(",").map(c => c.trim())).some(c => c.toLowerCase().includes(form.curso.toLowerCase())));
         const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.trim() === form.localidad.trim());
         const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toUpperCase().trim() === form.sexo);
@@ -200,6 +200,7 @@ export default function TutorConnect() {
       return pB - pA;
     }
     if (sortBy === "nombreAsc") return String(a.nombre || a.name || "").localeCompare(String(b.nombre || b.name || ""));
+    if (sortBy === "localidadAsc") return String(a.localidad || "").localeCompare(String(b.localidad || ""));
     return 0;
   }) : null;
 
@@ -215,11 +216,13 @@ export default function TutorConnect() {
       </button>
 
       {/* Cabecera */}
-      <div style={{ marginBottom: 36, textAlign: "center" }}>
-        <h1 className="title-font" style={{ fontSize: 34, fontWeight: 700, marginBottom: 8, letterSpacing: "-0.5px" }}>
+      <div style={{ marginBottom: 48, textAlign: "center" }}>
+        <h1 className="title-font" style={{ fontSize: 38, fontWeight: 700, marginBottom: 4, letterSpacing: "-1px" }}>
           Academia Industrial by Orbel
         </h1>
-        <p style={{ fontSize: 15, color: "var(--text-secondary)" }}>Directorio de profesorado</p>
+        <p className="title-font" style={{ fontSize: 13, color: "var(--text-secondary)", letterSpacing: "4px", fontWeight: 600, textTransform: "uppercase", opacity: 0.8 }}>
+          Directorio de profesorado
+        </p>
       </div>
 
       {/* Panel de Filtros */}
@@ -280,8 +283,8 @@ export default function TutorConnect() {
             </select>
           </div>
           <div>
-            <label className="label">Titulación (texto libre)</label>
-            <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" className="input" placeholder="Buscar en titulación..." />
+            <label className="label">Área de Especialidad</label>
+            <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" className="input" placeholder="Ej. Prevención, Soldadura, Marketing..." />
             <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
           </div>
         </div>
@@ -289,9 +292,9 @@ export default function TutorConnect() {
         <button
           onClick={handleSearch}
           disabled={loading}
-          className="btn-primary"
+          className="btn-primary title-font"
         >
-          {loading ? "Buscando..." : "Buscar profesores"}
+          {loading ? "BUSCANDO PERFILES..." : "🔍 EXPLORAR PROFESORADO"}
         </button>
       </div>
 
@@ -310,7 +313,11 @@ export default function TutorConnect() {
         <div>
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
             <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-              {results.length > 0 ? <>Se encontraron <strong style={{ color: "var(--text-primary)" }}>{results.length}</strong> profesor{results.length !== 1 ? "es" : ""}</> : "No se encontraron profesores con esos criterios."}
+              {results.length > 0 ? (
+                <>Se han localizado <strong style={{ color: "var(--accent-color)", fontWeight: 700 }}>{results.length}</strong> perfil{results.length !== 1 ? "es profesionales" : " profesional"}</>
+              ) : (
+                "No se han localizado perfiles que coincidan con la búsqueda."
+              )}
             </p>
 
             {results.length > 0 && (
@@ -323,9 +330,10 @@ export default function TutorConnect() {
                   style={{ padding: "6px 10px", width: "auto", fontSize: 13, paddingRight: 30 }}
                 >
                   <option value="default">Relevancia</option>
-                  <option value="precioAsc">Precio: más barato</option>
-                  <option value="precioDesc">Precio: más caro</option>
+                  <option value="precioAsc">Precio: menor a mayor</option>
+                  <option value="precioDesc">Precio: mayor a menor</option>
                   <option value="nombreAsc">Nombre (A-Z)</option>
+                  <option value="localidadAsc">Ubicación (A-Z)</option>
                 </select>
               </div>
             )}
@@ -380,12 +388,11 @@ export default function TutorConnect() {
                       <div className="grid-2" style={{ gap: 10 }}>
                         {[
                           { label: "Titulación", value: t.titulacion, icon: "🎓" },
-                          { label: "Localidad", value: t.localidad, icon: "📍" },
                           { label: "Sexo", value: t.sexo, icon: "👤" },
+                          { label: "Certificado Docencia (SSCE0110)", value: t.certificado_docencia, icon: "📜" },
+                          { label: "Ha trabajado en Orbel", value: t.trabajado_con_orbel, icon: "🏢" },
                           { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
                           { label: "Precio", value: t.precio ? `${t.precio} €` : null, icon: "💰" },
-                          { label: "Ha trabajado en Orbel", value: t.trabajado_con_orbel, icon: "🏢" },
-                          { label: "Certificado Docencia (SSCE0110)", value: t.certificado_docencia, icon: "📜" },
                         ].map(({ label, value, icon }) => value != null && value !== "" && (
                           <div key={label} className="prof-card-detail">
                             <div className="label" style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 3 }}>
