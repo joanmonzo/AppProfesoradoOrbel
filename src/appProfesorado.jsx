@@ -472,6 +472,7 @@ export default function TutorConnect() {
                           },
                         ].map(({ label, value, icon, render }) => {
                           if (!value && !render) return null;
+
                           return (
                             <div key={label} className="prof-card-detail">
                               <div
@@ -485,6 +486,7 @@ export default function TutorConnect() {
                                 {icon} {label}
                               </div>
                               <div style={{ fontSize: 13, fontWeight: 500 }}>
+                                {/* Ejecutar la función render si existe, si no, mostrar el valor en crudo */}
                                 {render ? render() : value}
                               </div>
                             </div>
