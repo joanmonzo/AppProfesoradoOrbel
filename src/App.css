@@ -189,10 +189,25 @@ select {
   display: inline-block;
 }
 
-.badge-docencia { background: var(--tag-docencia-bg); color: var(--tag-docencia-text); }
-.badge-elearning { background: var(--tag-elearning-bg); color: var(--tag-elearning-text); }
-.badge-orbel { background: var(--tag-orbel-bg); color: var(--tag-orbel-text); }
-.badge-no { background: var(--tag-no-bg); color: var(--tag-no-text); }
+.badge-docencia {
+  background: var(--tag-docencia-bg);
+  color: var(--tag-docencia-text);
+}
+
+.badge-elearning {
+  background: var(--tag-elearning-bg);
+  color: var(--tag-elearning-text);
+}
+
+.badge-orbel {
+  background: var(--tag-orbel-bg);
+  color: var(--tag-orbel-text);
+}
+
+.badge-no {
+  background: var(--tag-no-bg);
+  color: var(--tag-no-text);
+}
 
 /* Theme Toggle Button */
 .theme-toggle {

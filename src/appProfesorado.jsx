@@ -60,7 +60,7 @@ export default function TutorConnect() {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const [sortBy, setSortBy] = useState("default");
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   // Estado de Observaciones
   const [observaciones, setObservaciones] = useState({});
@@ -402,20 +402,94 @@ export default function TutorConnect() {
                     <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
                       <div className="grid-2" style={{ gap: 10 }}>
                         {[
-                          { label: "Titulación", value: t.titulacion, icon: "🎓" },
+                          {
+                            label: "Titulación",
+                            icon: "🎓",
+                            render: () => {
+                              const titList = Array.isArray(t.titulacion)
+                                ? t.titulacion
+                                : String(t.titulacion || "")
+                                  .split(",")
+                                  .map((x) => x.trim())
+                                  .filter(Boolean);
+                              return (
+                                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                                  {titList.map((tit, i) => (
+                                    <li key={i} style={{ fontSize: 13 }}>
+                                      {tit}
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            },
+                          },
                           { label: "Sexo", value: t.sexo, icon: "👤" },
-                          { label: "Certificado Docencia (SSCE0110)", value: t.certificado_docencia, icon: "📜" },
-                          { label: "Ha trabajado en Orbel", value: t.trabajado_con_orbel, icon: "🏢" },
-                          { label: "Curso", value: t.cursos ? (Array.isArray(t.cursos) ? t.cursos.join(", ") : t.cursos) : null, icon: "📚" },
-                          { label: "Precio", value: t.precio ? `${t.precio} €` : null, icon: "💰" },
-                        ].map(({ label, value, icon }) => value != null && value !== "" && (
-                          <div key={label} className="prof-card-detail">
-                            <div className="label" style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 3 }}>
-                              {icon} {label}
+                          {
+                            label: "Certificado Docencia (SSCE0110)",
+                            value: t.certificado_docencia,
+                            icon: "📜",
+                          },
+                          {
+                            label: "Ha trabajado en Orbel",
+                            value: t.trabajado_con_orbel,
+                            icon: "🏢",
+                          },
+                          {
+                            label: "Curso",
+                            icon: "📚",
+                            render: () => {
+                              const cursosList = Array.isArray(t.cursos)
+                                ? t.cursos
+                                : String(t.cursos || "")
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                              return (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                  {cursosList.map((curso, i) => (
+                                    <span
+                                      key={i}
+                                      style={{
+                                        background: "var(--bg-secondary)",
+                                        border: "1px solid var(--border-color)",
+                                        borderRadius: 6,
+                                        padding: "4px 8px",
+                                        fontSize: 12,
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      {curso}
+                                    </span>
+                                  ))}
+                                </div>
+                              );
+                            },
+                          },
+                          {
+                            label: "Precio",
+                            value: t.precio ? `${t.precio} €` : null,
+                            icon: "💰",
+                          },
+                        ].map(({ label, value, icon, render }) => {
+                          if (!value && !render) return null;
+                          return (
+                            <div key={label} className="prof-card-detail">
+                              <div
+                                className="label"
+                                style={{
+                                  fontSize: 11,
+                                  color: "var(--text-muted)",
+                                  marginBottom: 3,
+                                }}
+                              >
+                                {icon} {label}
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 500 }}>
+                                {render ? render() : value}
+                              </div>
                             </div>
-                            <div style={{ fontSize: 13, fontWeight: 500 }}>{value}</div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       {/* Caja de Observaciones */}
