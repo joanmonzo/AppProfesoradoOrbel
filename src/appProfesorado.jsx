@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./App.css";
+import "./index.css";
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwgCM-LjBMtEc_LwK7Gs7D6yfZ97niXebD3fGeSFmd18vTWQR7UY61ui-rMuB-nH_En/exec";
 
