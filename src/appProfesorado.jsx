@@ -5,11 +5,110 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwy8jdOcI_tuU05leo_ld68
 
 const initialForm = {
   nombre: "",
-  titulacion: "Todas", categoriaTitulacion: "Todas",
-  curso: "Todos", localidad: "Todas",
-  precioMax: "", sexo: "Todos",
-  trabajado_con_orbel: "Todos",
-  certificado_docencia: "Todos",
+  titulacion: "Todas",
+  categoriaTitulacion: "Todas",
+  cursos: [],
+  localidad: "Todas",
+  precioMax: "",
+  sexo: "Todos",
+  trabajado_con_orbel: "Indiferente",
+  certificado_docencia: "Indiferente",
+};
+
+// ==========================================
+// DICCIONARIO DE CATEGORÍAS (REGEX PATTERNS)
+// ==========================================
+const CATEGORIA_KEYWORDS = {
+  "Básica / Bachillerato": [
+    "\\beso\\b", "bachiller", "bachillerato", "\\bbup\\b", "\\bcou\\b", "graduado escolar"
+  ],
+  "FP / Certificados": [
+    "\\bfp\\b", "\\bfp1\\b", "\\bfp2\\b", "\\bfpi\\b", "\\bfpii\\b", "\\bfpb\\b",
+    "formación profesional", "grado medio", "grado superior", "ciclo formativo",
+    "técnico", "certificado de profesionalidad"
+  ],
+  "Universidad (Grado/Licenciatura)": [
+    "grado en", "grado universitario", "graduad[oa]", "licenciatur[oa]",
+    "diplomadur[oa]", "ingenier[ií]a", "ingeniero", "arquitect[oa]"
+  ],
+  "Máster / Postgrado": [
+    "m[aá]ster", "postgrado", "posgrado", "doctor", "doctorado"
+  ],
+  "Formador / Docencia": [
+    "formador", "docencia", "pedagog[ií]a", "magisterio", "cap"
+  ]
+};
+
+// ==========================================
+// COMPONENTE: MULTI-SELECT DROPDOWN
+// ==========================================
+const MultiSelectDropdown = ({ options, selected, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleOption = (option) => {
+    if (selected.includes(option)) {
+      onChange(selected.filter((item) => item !== option));
+    } else {
+      onChange([...selected, option]);
+    }
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div
+        className="input"
+        style={{
+          cursor: "pointer", display: "flex", justifyContent: "space-between",
+          alignItems: "center", userSelect: "none", background: "var(--input-bg)",
+          minHeight: "40px"
+        }}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span style={{ fontSize: 13, color: selected.length === 0 ? "var(--text-secondary)" : "var(--text-primary)" }}>
+          {selected.length === 0 ? "Todos los cursos" : `${selected.length} curso(s) seleccionado(s)`}
+        </span>
+        <span style={{ fontSize: 10 }}>{isOpen ? "▲" : "▼"}</span>
+      </div>
+
+      {isOpen && (
+        <>
+          <div
+            style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9 }}
+            onClick={() => setIsOpen(false)}
+          />
+          <div
+            style={{
+              position: "absolute", top: "100%", left: 0, right: 0, zIndex: 10,
+              background: "var(--bg-primary)", border: "1px solid var(--border-color)",
+              borderRadius: 8, maxHeight: 220, overflowY: "auto",
+              boxShadow: "var(--card-shadow-hover)", marginTop: 4, padding: "8px 0"
+            }}
+          >
+            {options.map((opt) => (
+              <label
+                key={opt}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                  cursor: "pointer", fontSize: 13, color: "var(--text-primary)",
+                  transition: "background 0.15s", margin: 0
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-secondary)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.includes(opt)}
+                  onChange={() => toggleOption(opt)}
+                  style={{ cursor: "pointer", width: 16, height: 16, accentColor: "var(--accent-color)" }}
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 };
 
 // ==========================================
@@ -46,14 +145,13 @@ const PaginationControls = ({ currentPage, totalItems, itemsPerPage, onPageChang
 // COMPONENTE PRINCIPAL
 // ==========================================
 export default function TutorConnect() {
-  // Estado General
   const [form, setForm] = useState(initialForm);
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState("light");
 
-  // Estado de Opciones y Paginación
+  const [nombresDisponibles, setNombresDisponibles] = useState([]);
   const [titulaciones, setTitulaciones] = useState([]);
   const [cursosDisponibles, setCursosDisponibles] = useState([]);
   const [localidades, setLocalidades] = useState([]);
@@ -62,16 +160,15 @@ export default function TutorConnect() {
   const [sortBy, setSortBy] = useState("default");
   const itemsPerPage = 8;
 
-  // Estado de Observaciones
   const [observaciones, setObservaciones] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [saveStatus, setSaveStatus] = useState({});
 
-  // Carga inicial de filtros desde la API
   useEffect(() => {
     fetch(`${API_URL}?action=todos`)
       .then(res => res.json())
       .then(data => {
+        setNombresDisponibles([...new Set(data.map(p => p.nombre || p.name).filter(Boolean))].sort());
         setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))].sort());
         setCursosDisponibles([...new Set(
           data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : []).filter(Boolean)
@@ -80,7 +177,6 @@ export default function TutorConnect() {
       }).catch(() => { });
   }, []);
 
-  // Sincronizar tema con atributo en el body
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
@@ -89,7 +185,6 @@ export default function TutorConnect() {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-  // Acción para guardar observaciones
   const handleGuardar = async (id) => {
     setSavingId(id);
     setSaveStatus(prev => ({ ...prev, [id]: null }));
@@ -108,7 +203,6 @@ export default function TutorConnect() {
     }
   };
 
-  // Acción de filtrado en el cliente
   const handleSearch = async () => {
     setLoading(true); setError(null);
     try {
@@ -117,25 +211,33 @@ export default function TutorConnect() {
       const data = await res.json();
 
       const filtered = data.filter(t => {
-        const CATEGORIA_KEYWORDS = {
-          "FP": ["fp", "formación profesional", "grado medio", "grado superior", "ciclo formativo", "fpb", "fp1", "fp2", "fp i", "fp ii", "técnico superior", "técnico especialista", "técnico auxiliar", "técnico en", "técnico medio"],
-          "Universidad": ["grado en", "grado universitario", "graduado", "graduada", "licenciatura", "licenciado", "licenciada", "ingeniería", "ingeniero", "ingenieria", "arquitectura"],
-          "Máster": ["máster", "master", "máster universitario"],
-          "Formador": ["formador", "docencia", "pedagogía", "pedagogo", "magister"],
-          "Sin titulación": ["sin titulacion", "no indica", "sin titulación"],
-          "Otro": [],
-        };
         const matchCategoria = form.categoriaTitulacion === "Todas" || (() => {
           const tit = String(t.titulacion || "").toLowerCase();
+
+          if (form.categoriaTitulacion === "Sin titulación") {
+            return tit === "" || tit === "sin titulacion" || tit === "no indica";
+          }
+
+          if (form.categoriaTitulacion === "Otro") {
+            const allKeywords = Object.values(CATEGORIA_KEYWORDS).flat();
+            return !allKeywords.some(pattern => new RegExp(pattern, 'i').test(tit));
+          }
+
           const keywords = CATEGORIA_KEYWORDS[form.categoriaTitulacion];
           if (!keywords) return true;
-          if (keywords.length === 0) {
-            return !Object.entries(CATEGORIA_KEYWORDS).filter(([k]) => k !== "Otro").some(([, kws]) => kws.some(kw => tit.includes(kw)));
-          }
-          return keywords.some(kw => tit.includes(kw));
+
+          return keywords.some(pattern => new RegExp(pattern, 'i').test(tit));
         })();
+
         const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && String(t.titulacion).toLowerCase().includes(form.titulacion.toLowerCase()));
-        const matchCurso = form.curso === "Todos" || form.curso === "" || (t.cursos && (Array.isArray(t.cursos) ? t.cursos : t.cursos.split(",").map(c => c.trim())).some(c => c.toLowerCase().includes(form.curso.toLowerCase())));
+
+        const matchCurso = form.cursos.length === 0 || (() => {
+          const profCursos = t.cursos ? (Array.isArray(t.cursos) ? t.cursos : String(t.cursos).split(",").map(c => c.trim())) : [];
+          return form.cursos.some(selectedCurso =>
+            profCursos.some(c => c.toLowerCase().includes(selectedCurso.toLowerCase()))
+          );
+        })();
+
         const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.trim() === form.localidad.trim());
         const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toUpperCase().trim() === form.sexo);
 
@@ -153,13 +255,13 @@ export default function TutorConnect() {
           return pMin === bNum || pMax === bNum;
         })();
 
-        const matchOrbel = form.trabajado_con_orbel === "Todos" || (() => {
+        const matchOrbel = form.trabajado_con_orbel === "Indiferente" || (() => {
           const val = String(t.trabajado_con_orbel || "").toLowerCase().trim();
           const isNo = val === "no" || val === "";
           return form.trabajado_con_orbel === "Sí" ? !isNo : isNo;
         })();
 
-        const matchCertDocencia = form.certificado_docencia === "Todos" || (() => {
+        const matchCertDocencia = form.certificado_docencia === "Indiferente" || (() => {
           const val = String(t.certificado_docencia || "").toLowerCase().trim();
           const isNo = val === "no" || val === "";
           return form.certificado_docencia === "Sí" ? !isNo : isNo;
@@ -223,12 +325,10 @@ export default function TutorConnect() {
 
   return (
     <div className="app-container">
-      {/* Botón de Tema */}
       <button className="theme-toggle" onClick={toggleTheme} title="Cambiar tema">
         {theme === 'light' ? '☀️' : '🌙'}
       </button>
 
-      {/* Cabecera */}
       <div style={{ marginBottom: 48, textAlign: "center" }}>
         <h1 className="title-font" style={{ fontSize: 38, fontWeight: 700, marginBottom: 4, letterSpacing: "-1px" }}>
           Academia Industrial by Orbel
@@ -238,12 +338,22 @@ export default function TutorConnect() {
         </p>
       </div>
 
-      {/* Panel de Filtros */}
       <div className="panel">
         <div className="grid-2">
           <div>
             <label className="label">Nombre</label>
-            <input type="text" name="nombre" value={form.nombre} onChange={handleChange} className="input" />
+            <input
+              type="text"
+              name="nombre"
+              value={form.nombre}
+              onChange={handleChange}
+              list="nombres-list"
+              placeholder="Buscar profesor..."
+              className="input"
+            />
+            <datalist id="nombres-list">
+              {nombresDisponibles.map(n => <option key={n} value={n} />)}
+            </datalist>
           </div>
           <div>
             <label className="label">Sexo</label>
@@ -253,13 +363,16 @@ export default function TutorConnect() {
               <option value="F">Femenino (F)</option>
             </select>
           </div>
+
           <div>
-            <label className="label">Curso</label>
-            <select name="curso" value={form.curso} onChange={handleChange} className="input">
-              <option value="Todos">Todos</option>
-              {cursosDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <label className="label">Cursos</label>
+            <MultiSelectDropdown
+              options={cursosDisponibles}
+              selected={form.cursos}
+              onChange={(nuevosCursos) => setForm({ ...form, cursos: nuevosCursos })}
+            />
           </div>
+
           <div>
             <label className="label">Localidad</label>
             <select name="localidad" value={form.localidad} onChange={handleChange} className="input">
@@ -270,7 +383,7 @@ export default function TutorConnect() {
           <div>
             <label className="label">Trabajó en Orbel</label>
             <select name="trabajado_con_orbel" value={form.trabajado_con_orbel} onChange={handleChange} className="input">
-              <option value="Todos">Todos</option>
+              <option value="Indiferente">Indiferente</option>
               <option value="Sí">Sí</option>
               <option value="No">No</option>
             </select>
@@ -278,25 +391,27 @@ export default function TutorConnect() {
           <div>
             <label className="label">Cert. Docencia</label>
             <select name="certificado_docencia" value={form.certificado_docencia} onChange={handleChange} className="input">
-              <option value="Todos">Todos</option>
+              <option value="Indiferente">Indiferente</option>
               <option value="Sí">Sí</option>
               <option value="No">No</option>
             </select>
           </div>
           <div>
+            {/* <-- Selector de Categorías UI Actualizado --> */}
             <label className="label">Categoría Titulación</label>
             <select name="categoriaTitulacion" value={form.categoriaTitulacion} onChange={handleChange} className="input">
               <option value="Todas">Todas</option>
-              <option value="FP">FP / Técnico</option>
-              <option value="Universidad">Grado / Licenciatura / Ingeniería</option>
-              <option value="Máster">Máster</option>
-              <option value="Formador">Formador / Pedagogía</option>
+              <option value="Básica / Bachillerato">Educación Básica / Bachillerato</option>
+              <option value="FP / Certificados">FP / Técnico / Certificados</option>
+              <option value="Universidad (Grado/Licenciatura)">Universidad (Grado / Licenciatura)</option>
+              <option value="Máster / Postgrado">Máster / Postgrado</option>
+              <option value="Formador / Docencia">Formador / Docencia / CAP</option>
               <option value="Sin titulación">Sin titulación</option>
-              <option value="Otro">Otra</option>
+              <option value="Otro">Otra / No clasificada</option>
             </select>
           </div>
           <div>
-            <label className="label">Área de Especialidad</label>
+            <label className="label">Titulaciones</label>
             <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={handleChange} list="titulaciones-list" className="input" placeholder="Ej. Prevención, Soldadura, Marketing..." />
             <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
           </div>
@@ -311,7 +426,6 @@ export default function TutorConnect() {
         </button>
       </div>
 
-      {/* Mensaje de Error */}
       {error && (
         <div style={{
           background: "var(--danger-bg)", border: "1px solid var(--danger-border)",
@@ -321,7 +435,6 @@ export default function TutorConnect() {
         </div>
       )}
 
-      {/* Área de Resultados */}
       {results !== null && !error && (
         <div>
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
@@ -360,7 +473,6 @@ export default function TutorConnect() {
               return (
                 <div key={t.id || i} className={`prof-card ${isExpanded ? 'expanded' : ''}`} onClick={() => setExpandedId(isExpanded ? null : t.id)}>
 
-                  {/* Tarjeta contraída: Nombre y breve resumen */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isExpanded ? 16 : 0 }}>
                     <div style={{ flex: 1, paddingRight: 16 }}>
                       <div className="title-font" style={{ fontSize: 17, fontWeight: 600, display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px 12px" }}>
@@ -397,7 +509,6 @@ export default function TutorConnect() {
                     )}
                   </div>
 
-                  {/* Tarjeta expandida: Detalles y Notas */}
                   {isExpanded && (
                     <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
                       <div className="grid-2" style={{ gap: 10 }}>
@@ -486,7 +597,6 @@ export default function TutorConnect() {
                                 {icon} {label}
                               </div>
                               <div style={{ fontSize: 13, fontWeight: 500 }}>
-                                {/* Ejecutar la función render si existe, si no, mostrar el valor en crudo */}
                                 {render ? render() : value}
                               </div>
                             </div>
@@ -494,7 +604,6 @@ export default function TutorConnect() {
                         })}
                       </div>
 
-                      {/* Caja de Observaciones */}
                       <div style={{ marginTop: 14 }}>
                         <div className="label" style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>
                           📝 Observaciones
@@ -531,7 +640,6 @@ export default function TutorConnect() {
             })}
           </div>
 
-          {/* Paginación */}
           <PaginationControls
             currentPage={currentPage}
             totalItems={results.length}
