@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import "./index.css";
+import { auth } from "./firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import Login from "./login";
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwy8jdOcI_tuU05leo_ld68tGSjPw7rE2QA7tcOe46NIbrhuj-XsFKmTT6sWy-NUlrx/exec";
 
@@ -151,6 +154,10 @@ export default function TutorConnect() {
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState("light");
 
+  // Estado de Autenticación
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
   const [nombresDisponibles, setNombresDisponibles] = useState([]);
   const [titulaciones, setTitulaciones] = useState([]);
   const [cursosDisponibles, setCursosDisponibles] = useState([]);
@@ -180,6 +187,37 @@ export default function TutorConnect() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Login Control
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        const email = u.email || "";
+        const allowed = email.endsWith("@orbelgrupo.com") || email.endsWith("@academiaindustrial.com");
+
+        if (!allowed) {
+          signOut(auth);
+          setUser(null);
+          setLoadingAuth(false);
+          return;
+        }
+
+        if (!u.emailVerified) {
+          signOut(auth);
+          setUser(null);
+          setLoadingAuth(false);
+          return;
+        }
+
+        setUser(u);
+      } else {
+        setUser(null);
+      }
+      setLoadingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -323,10 +361,34 @@ export default function TutorConnect() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentResults = sortedResults ? sortedResults.slice(indexOfFirstItem, indexOfLastItem) : [];
 
+  // Vistas de Carga y Login
+  if (loadingAuth) {
+    return (
+      <div className="app-container">
+        <div className="panel" style={{ textAlign: "center" }}>
+          Cargando acceso...
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="app-container">
+        <Login onLogin={setUser} />
+      </div>
+    );
+  }
+
+  // Vista Principal de la App (Protegida)
   return (
     <div className="app-container">
-      <button className="theme-toggle" onClick={toggleTheme} title="Cambiar tema">
+      {/* Botón de Tema y Botón de Logout */}
+      <button className="theme-toggle" onClick={toggleTheme} title="Cambiar tema" style={{ right: 80 }}>
         {theme === 'light' ? '☀️' : '🌙'}
+      </button>
+      <button onClick={() => signOut(auth)} className="theme-toggle" title="Cerrar sesión">
+        🚪
       </button>
 
       <div style={{ marginBottom: 48, textAlign: "center" }}>
@@ -397,7 +459,6 @@ export default function TutorConnect() {
             </select>
           </div>
           <div>
-            {/* <-- Selector de Categorías UI Actualizado --> */}
             <label className="label">Categoría Titulación</label>
             <select name="categoriaTitulacion" value={form.categoriaTitulacion} onChange={handleChange} className="input">
               <option value="Todas">Todas</option>
@@ -473,6 +534,7 @@ export default function TutorConnect() {
               return (
                 <div key={t.id || i} className={`prof-card ${isExpanded ? 'expanded' : ''}`} onClick={() => setExpandedId(isExpanded ? null : t.id)}>
 
+                  {/* Cabecera (Vista previa contraída) */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isExpanded ? 16 : 0 }}>
                     <div style={{ flex: 1, paddingRight: 16 }}>
                       <div className="title-font" style={{ fontSize: 17, fontWeight: 600, display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px 12px" }}>
@@ -509,10 +571,12 @@ export default function TutorConnect() {
                     )}
                   </div>
 
+                  {/* Vista Expandida */}
                   {isExpanded && (
                     <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
                       <div className="grid-2" style={{ gap: 10 }}>
                         {[
+                          // Fila 1: Titulación y Sexo
                           {
                             label: "Titulación",
                             icon: "🎓",
@@ -535,19 +599,52 @@ export default function TutorConnect() {
                             },
                           },
                           { label: "Sexo", value: t.sexo, icon: "👤" },
+
+                          // Fila 2: Precio y Trabajado en Orbel
                           {
-                            label: "Certificado Docencia (SSCE0110)",
-                            value: t.certificado_docencia,
-                            icon: "📜",
+                            label: "Precio",
+                            value: t.precio ? `${t.precio} €` : null,
+                            icon: "💰",
                           },
                           {
                             label: "Ha trabajado en Orbel",
                             value: t.trabajado_con_orbel,
                             icon: "🏢",
                           },
+
+                          // NUEVO (Fila 3): Certificaciones (ocupa 2 columnas para no romper la cuadrícula)
                           {
-                            label: "Curso",
+                            label: "Certificaciones",
+                            icon: "📜",
+                            colSpan: 2,
+                            render: () => {
+                              const hasDocencia = t.certificado_docencia && t.certificado_docencia !== "";
+                              const hasElearning = t.certificado_teleformacion && t.certificado_teleformacion !== "";
+
+                              if (!hasDocencia && !hasElearning) return <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No indicadas</span>;
+
+                              return (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                                  {hasDocencia && (
+                                    <div className={`badge ${t.certificado_docencia.toLowerCase().trim() === "no" ? 'badge-no' : 'badge-docencia'}`} style={{ margin: 0, padding: "4px 8px" }}>
+                                      SSCE0110: {t.certificado_docencia}
+                                    </div>
+                                  )}
+                                  {hasElearning && (
+                                    <div className={`badge ${t.certificado_teleformacion.toLowerCase().trim() === "no" ? 'badge-no' : 'badge-elearning'}`} style={{ margin: 0, padding: "4px 8px" }}>
+                                      E-LEARNING: {t.certificado_teleformacion}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                          },
+
+                          // Fila 4: Cursos (ocupa 2 columnas)
+                          {
+                            label: "Cursos",
                             icon: "📚",
+                            colSpan: 2,
                             render: () => {
                               const cursosList = Array.isArray(t.cursos)
                                 ? t.cursos
@@ -576,16 +673,15 @@ export default function TutorConnect() {
                               );
                             },
                           },
-                          {
-                            label: "Precio",
-                            value: t.precio ? `${t.precio} €` : null,
-                            icon: "💰",
-                          },
-                        ].map(({ label, value, icon, render }) => {
+                        ].map(({ label, value, icon, render, colSpan }) => {
                           if (!value && !render) return null;
 
                           return (
-                            <div key={label} className="prof-card-detail">
+                            <div
+                              key={label}
+                              className="prof-card-detail"
+                              style={colSpan ? { gridColumn: "1 / -1" } : {}}
+                            >
                               <div
                                 className="label"
                                 style={{
