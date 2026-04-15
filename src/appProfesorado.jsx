@@ -576,7 +576,7 @@ export default function TutorConnect() {
                     <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
                       <div className="grid-2" style={{ gap: 10 }}>
                         {[
-                          // Fila 1: Titulación y Sexo
+                          // Fila 1: Titulación y Certificaciones (Ocupa el lugar de Sexo)
                           {
                             label: "Titulación",
                             icon: "🎓",
@@ -598,25 +598,10 @@ export default function TutorConnect() {
                               );
                             },
                           },
-                          { label: "Sexo", value: t.sexo, icon: "👤" },
-
-                          // Fila 2: Precio y Trabajado en Orbel
-                          {
-                            label: "Precio",
-                            value: t.precio ? `${t.precio} €` : null,
-                            icon: "💰",
-                          },
-                          {
-                            label: "Ha trabajado en Orbel",
-                            value: t.trabajado_con_orbel,
-                            icon: "🏢",
-                          },
-
-                          // NUEVO (Fila 3): Certificaciones (ocupa 2 columnas para no romper la cuadrícula)
                           {
                             label: "Certificaciones",
                             icon: "📜",
-                            colSpan: 2,
+                            // Eliminamos colSpan: 2; ahora ocupa la columna 2 natural
                             render: () => {
                               const hasDocencia = t.certificado_docencia && t.certificado_docencia !== "";
                               const hasElearning = t.certificado_teleformacion && t.certificado_teleformacion !== "";
@@ -637,10 +622,22 @@ export default function TutorConnect() {
                                   )}
                                 </div>
                               );
-                            }
+                            },
                           },
 
-                          // Fila 4: Cursos (ocupa 2 columnas)
+                          // Fila 2: Precio y Trabajado en Orbel
+                          {
+                            label: "Precio",
+                            value: t.precio ? `${t.precio} €` : null,
+                            icon: "💰",
+                          },
+                          {
+                            label: "Ha trabajado en Orbel",
+                            value: t.trabajado_con_orbel,
+                            icon: "🏢",
+                          },
+
+                          // Fila 3: Cursos (Se mantiene abarcando todo el ancho)
                           {
                             label: "Cursos",
                             icon: "📚",
