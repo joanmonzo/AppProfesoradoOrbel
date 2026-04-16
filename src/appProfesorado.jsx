@@ -546,7 +546,7 @@ export default function TutorConnect() {
                         <span style={{ fontSize: 12, color: "var(--text-secondary)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
                       </div>
                       {!isExpanded && t.titulacion && (
-                        <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 6, lineHeight: 1.4 }}>🎓 {t.titulacion}</div>
+                        <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 6, lineHeight: 1.4 }}>🎓 {Array.isArray(t.titulacion) ? t.titulacion.join(" / ") : String(t.titulacion).split("/").map(x => x.trim()).join(" / ")}</div>
                       )}
                     </div>
 
@@ -590,7 +590,7 @@ export default function TutorConnect() {
                               return (
                                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                                   {titList.map((tit, i) => (
-                                    <li key={i} style={{ fontSize: 13 }}>
+                                    <li key={i} style={{ fontSize: 13, marginBottom: 8 }}>
                                       {tit}
                                     </li>
                                   ))}
