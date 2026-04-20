@@ -242,86 +242,166 @@ export default function TutorConnect() {
   };
 
   const handleSearch = async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
+      // React pide todos los datos para filtrarlos localmente
       const res = await fetch(`${API_URL}?action=todos`);
-      if (!res.ok) throw new Error("Error al conectar con la API");
+
+      if (!res.ok) {
+        throw new Error(`Error de red: ${res.status} ${res.statusText}`);
+      }
+
       const data = await res.json();
 
-      const filtered = data.filter(t => {
-        const matchCategoria = form.categoriaTitulacion.length === 0 || form.categoriaTitulacion.some(cat => {
-          const tit = String(t.titulacion || "").toLowerCase();
+      if (data && data.error) {
+        throw new Error(`Error desde Google: ${data.message}`);
+      }
 
-          if (cat === "Sin titulación") {
-            return tit === "" || tit === "sin titulacion" || tit === "no indica";
-          }
+      if (!Array.isArray(data)) {
+        console.error("Lo que llegó de Google no es un Array:", data);
+        throw new Error(
+          "El servidor devolvió un formato incorrecto (revisa la consola).",
+        );
+      }
 
-          if (cat === "Otro") {
-            const allKeywords = Object.values(CATEGORIA_KEYWORDS).flat();
-            return !allKeywords.some(pattern => new RegExp(pattern, 'i').test(tit));
-          }
+      const filtered = data.filter((t) => {
+        const matchCategoria =
+          form.categoriaTitulacion.length === 0 ||
+          form.categoriaTitulacion.some((cat) => {
+            const tit = String(t.titulacion || "").toLowerCase();
 
-          const keywords = CATEGORIA_KEYWORDS[cat];
-          if (!keywords) return false;
+            if (cat === "Sin titulación") {
+              return (
+                tit === "" || tit === "sin titulacion" || tit === "no indica"
+              );
+            }
 
-          return keywords.some(pattern => new RegExp(pattern, 'i').test(tit));
-        });
+            if (cat === "Otro") {
+              const allKeywords = Object.values(CATEGORIA_KEYWORDS).flat();
+              return !allKeywords.some((pattern) =>
+                new RegExp(pattern, "i").test(tit),
+              );
+            }
 
-        const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && String(t.titulacion).toLowerCase().includes(form.titulacion.toLowerCase()));
+            const keywords = CATEGORIA_KEYWORDS[cat];
+            if (!keywords) return false;
 
-        const matchCurso = form.cursos.length === 0 || (() => {
-          const profCursos = t.cursos ? (Array.isArray(t.cursos) ? t.cursos : String(t.cursos).split(",").map(c => c.trim())) : [];
-          return form.cursos.some(selectedCurso =>
-            profCursos.some(c => c.toLowerCase().includes(selectedCurso.toLowerCase()))
-          );
-        })();
+            return keywords.some((pattern) =>
+              new RegExp(pattern, "i").test(tit),
+            );
+          });
 
-        const matchLocalidad = form.localidad === "Todas" || form.localidad === "" || (t.localidad && t.localidad.trim() === form.localidad.trim());
-        const matchSexo = form.sexo === "Todos" || form.sexo === "" || (t.sexo && t.sexo.toUpperCase().trim() === form.sexo);
+        const matchTitulacion =
+          form.titulacion === "Todas" ||
+          form.titulacion === "" ||
+          (t.titulacion &&
+            String(t.titulacion)
+              .toLowerCase()
+              .includes(form.titulacion.toLowerCase()));
 
-        const matchPrecio = form.precioMax === "" || (() => {
-          const input = form.precioMax.trim();
-          const precioProfesor = String(t.precio).trim();
-          const esRango = precioProfesor.includes("-");
-          const [pMin, pMax] = esRango ? precioProfesor.split("-").map(v => Number(v.trim())) : [Number(precioProfesor), Number(precioProfesor)];
+        const matchCurso =
+          form.cursos.length === 0 ||
+          (() => {
+            const profCursos = t.cursos
+              ? Array.isArray(t.cursos)
+                ? t.cursos
+                : String(t.cursos)
+                  .split(",")
+                  .map((c) => c.trim())
+              : [];
+            return form.cursos.some((selectedCurso) =>
+              profCursos.some((c) =>
+                c.toLowerCase().includes(selectedCurso.toLowerCase()),
+              ),
+            );
+          })();
 
-          if (input.includes("-")) {
-            const [bMin, bMax] = input.split("-").map(v => Number(v.trim()));
-            return pMin <= bMax && pMax >= bMin;
-          }
-          const bNum = Number(input);
-          return pMin === bNum || pMax === bNum;
-        })();
+        const matchLocalidad =
+          form.localidad === "Todas" ||
+          form.localidad === "" ||
+          (t.localidad && String(t.localidad).trim() === form.localidad.trim());
 
-        const matchOrbel = form.trabajado_con_orbel === "Indiferente" || (() => {
-          const val = String(t.trabajado_con_orbel || "").toLowerCase().trim();
-          const isNo = val === "no" || val === "";
-          return form.trabajado_con_orbel === "Sí" ? !isNo : isNo;
-        })();
+        const matchSexo =
+          form.sexo === "Todos" ||
+          form.sexo === "" ||
+          (t.sexo && String(t.sexo).toUpperCase().trim() === form.sexo);
 
-        const matchCertDocencia = form.certificado_docencia === "Indiferente" || (() => {
-          const val = String(t.certificado_docencia || "").toLowerCase().trim();
-          const isNo = val === "no" || val === "";
-          return form.certificado_docencia === "Sí" ? !isNo : isNo;
-        })();
+        const matchPrecio =
+          form.precioMax === "" ||
+          (() => {
+            const input = form.precioMax.trim();
+            const precioProfesor = String(t.precio || "").trim();
+            const esRango = precioProfesor.includes("-");
+            const [pMin, pMax] = esRango
+              ? precioProfesor.split("-").map((v) => Number(v.trim()))
+              : [Number(precioProfesor), Number(precioProfesor)];
 
-        const matchNombre = form.nombre === "" || String(t.nombre || t.name || "").toLowerCase().includes(form.nombre.toLowerCase());
+            if (input.includes("-")) {
+              const [bMin, bMax] = input
+                .split("-")
+                .map((v) => Number(v.trim()));
+              return pMin <= bMax && pMax >= bMin;
+            }
+            const bNum = Number(input);
+            return pMin === bNum || pMax === bNum;
+          })();
 
-        return matchNombre && matchCategoria && matchTitulacion && matchCurso && matchLocalidad && matchSexo && matchPrecio && matchOrbel && matchCertDocencia;
+        const matchOrbel =
+          form.trabajado_con_orbel === "Indiferente" ||
+          (() => {
+            const val = String(t.trabajado_con_orbel || "")
+              .toLowerCase()
+              .trim();
+            const isNo = val === "no" || val === "";
+            return form.trabajado_con_orbel === "Sí" ? !isNo : isNo;
+          })();
+
+        const matchCertDocencia =
+          form.certificado_docencia === "Indiferente" ||
+          (() => {
+            const val = String(t.certificado_docencia || "")
+              .toLowerCase()
+              .trim();
+            const isNo = val === "no" || val === "";
+            return form.certificado_docencia === "Sí" ? !isNo : isNo;
+          })();
+
+        const matchNombre =
+          form.nombre === "" ||
+          String(t.nombre || t.name || "")
+            .toLowerCase()
+            .includes(form.nombre.toLowerCase());
+
+        return (
+          matchNombre &&
+          matchCategoria &&
+          matchTitulacion &&
+          matchCurso &&
+          matchLocalidad &&
+          matchSexo &&
+          matchPrecio &&
+          matchOrbel &&
+          matchCertDocencia
+        );
       });
 
       setResults(filtered);
       setCurrentPage(1);
 
       const obs = {};
-      filtered.forEach(t => { obs[t.id] = t.observaciones ?? ""; });
+      filtered.forEach((t) => {
+        obs[t.id] = t.observaciones ?? "";
+      });
       setObservaciones(obs);
     } catch (err) {
-      setError("No se pudo conectar con la API. Comprueba que el servidor esté activo.");
+      console.error("ERROR CAPTURADO EN REACT:", err);
+      setError(err.message || "Error desconocido en el frontend.");
     } finally {
       setLoading(false);
     }
   };
+
 
   const getNumericPrice = (p) => {
     if (!p) return Infinity;
@@ -361,7 +441,6 @@ export default function TutorConnect() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentResults = sortedResults ? sortedResults.slice(indexOfFirstItem, indexOfLastItem) : [];
 
-  // Vistas de Carga y Login
   if (loadingAuth) {
     return (
       <div className="app-container">
