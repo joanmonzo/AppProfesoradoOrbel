@@ -9,7 +9,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwy8jdOcI_tuU05leo_ld68
 const initialForm = {
   nombre: "",
   titulacion: "Todas",
-  categoriaTitulacion: "Todas",
+  categoriaTitulacion: [],
   cursos: [],
   localidad: "Todas",
   precioMax: "",
@@ -45,7 +45,7 @@ const CATEGORIA_KEYWORDS = {
 // ==========================================
 // COMPONENTE: MULTI-SELECT DROPDOWN
 // ==========================================
-const MultiSelectDropdown = ({ options, selected, onChange }) => {
+const MultiSelectDropdown = ({ options, selected, onChange, placeholder = "Seleccionar..." }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOption = (option) => {
@@ -68,7 +68,7 @@ const MultiSelectDropdown = ({ options, selected, onChange }) => {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span style={{ fontSize: 13, color: selected.length === 0 ? "var(--text-secondary)" : "var(--text-primary)" }}>
-          {selected.length === 0 ? "Todos los cursos" : `${selected.length} curso(s) seleccionado(s)`}
+          {selected.length === 0 ? placeholder : `${selected.length} seleccionado(s)`}
         </span>
         <span style={{ fontSize: 10 }}>{isOpen ? "▲" : "▼"}</span>
       </div>
@@ -249,23 +249,23 @@ export default function TutorConnect() {
       const data = await res.json();
 
       const filtered = data.filter(t => {
-        const matchCategoria = form.categoriaTitulacion === "Todas" || (() => {
+        const matchCategoria = form.categoriaTitulacion.length === 0 || form.categoriaTitulacion.some(cat => {
           const tit = String(t.titulacion || "").toLowerCase();
 
-          if (form.categoriaTitulacion === "Sin titulación") {
+          if (cat === "Sin titulación") {
             return tit === "" || tit === "sin titulacion" || tit === "no indica";
           }
 
-          if (form.categoriaTitulacion === "Otro") {
+          if (cat === "Otro") {
             const allKeywords = Object.values(CATEGORIA_KEYWORDS).flat();
             return !allKeywords.some(pattern => new RegExp(pattern, 'i').test(tit));
           }
 
-          const keywords = CATEGORIA_KEYWORDS[form.categoriaTitulacion];
-          if (!keywords) return true;
+          const keywords = CATEGORIA_KEYWORDS[cat];
+          if (!keywords) return false;
 
           return keywords.some(pattern => new RegExp(pattern, 'i').test(tit));
-        })();
+        });
 
         const matchTitulacion = form.titulacion === "Todas" || form.titulacion === "" || (t.titulacion && String(t.titulacion).toLowerCase().includes(form.titulacion.toLowerCase()));
 
@@ -432,6 +432,7 @@ export default function TutorConnect() {
               options={cursosDisponibles}
               selected={form.cursos}
               onChange={(nuevosCursos) => setForm({ ...form, cursos: nuevosCursos })}
+              placeholder="Todos los cursos"
             />
           </div>
 
@@ -460,16 +461,20 @@ export default function TutorConnect() {
           </div>
           <div>
             <label className="label">Categoría Titulación</label>
-            <select name="categoriaTitulacion" value={form.categoriaTitulacion} onChange={handleChange} className="input">
-              <option value="Todas">Todas</option>
-              <option value="Básica / Bachillerato">Educación Básica / Bachillerato</option>
-              <option value="FP / Certificados">FP / Técnico / Certificados</option>
-              <option value="Universidad (Grado/Licenciatura)">Universidad (Grado / Licenciatura)</option>
-              <option value="Máster / Postgrado">Máster / Postgrado</option>
-              <option value="Formador / Docencia">Formador / Docencia / CAP</option>
-              <option value="Sin titulación">Sin titulación</option>
-              <option value="Otro">Otra / No clasificada</option>
-            </select>
+            <MultiSelectDropdown
+              options={[
+                "Básica / Bachillerato",
+                "FP / Certificados",
+                "Universidad (Grado/Licenciatura)",
+                "Máster / Postgrado",
+                "Formador / Docencia",
+                "Sin titulación",
+                "Otro"
+              ]}
+              selected={form.categoriaTitulacion}
+              onChange={(nuevasCategorias) => setForm({ ...form, categoriaTitulacion: nuevasCategorias })}
+              placeholder="Todas las categorías"
+            />
           </div>
           <div>
             <label className="label">Titulaciones</label>
