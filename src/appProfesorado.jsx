@@ -18,9 +18,6 @@ const initialForm = {
   certificado_docencia: "Indiferente",
 };
 
-// ==========================================
-// DICCIONARIO DE CATEGORÍAS (REGEX PATTERNS)
-// ==========================================
 const CATEGORIA_KEYWORDS = {
   "Básica / Bachillerato": [
     "\\beso\\b", "bachiller", "bachillerato", "\\bbup\\b", "\\bcou\\b", "graduado escolar"
@@ -42,9 +39,6 @@ const CATEGORIA_KEYWORDS = {
   ]
 };
 
-// ==========================================
-// COMPONENTE: MULTI-SELECT DROPDOWN
-// ==========================================
 const MultiSelectDropdown = ({ options, selected, onChange, placeholder = "Seleccionar..." }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -154,7 +148,6 @@ export default function TutorConnect() {
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState("light");
 
-  // Estado de Autenticación
   const [user, setUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
@@ -245,7 +238,6 @@ export default function TutorConnect() {
     setLoading(true);
     setError(null);
     try {
-      // React pide todos los datos para filtrarlos localmente
       const res = await fetch(`${API_URL}?action=todos`);
 
       if (!res.ok) {
@@ -459,10 +451,8 @@ export default function TutorConnect() {
     );
   }
 
-  // Vista Principal de la App (Protegida)
   return (
     <div className="app-container">
-      {/* Botón de Tema y Botón de Logout */}
       <button className="theme-toggle" onClick={toggleTheme} title="Cambiar tema" style={{ right: 80 }}>
         {theme === 'light' ? '☀️' : '🌙'}
       </button>
@@ -618,7 +608,7 @@ export default function TutorConnect() {
               return (
                 <div key={t.id || i} className={`prof-card ${isExpanded ? 'expanded' : ''}`} onClick={() => setExpandedId(isExpanded ? null : t.id)}>
 
-                  {/* Cabecera (Vista previa contraída) */}
+                  {/* Vista previa contraída */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isExpanded ? 16 : 0 }}>
                     <div style={{ flex: 1, paddingRight: 16 }}>
                       <div className="title-font" style={{ fontSize: 17, fontWeight: 600, display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px 12px" }}>
@@ -655,12 +645,10 @@ export default function TutorConnect() {
                     )}
                   </div>
 
-                  {/* Vista Expandida */}
                   {isExpanded && (
                     <div onClick={(e) => e.stopPropagation()} style={{ cursor: "default" }}>
                       <div className="grid-2" style={{ gap: 10 }}>
                         {[
-                          // Fila 1: Titulación y Certificaciones (Ocupa el lugar de Sexo)
                           {
                             label: "Titulación",
                             icon: "🎓",
@@ -685,7 +673,6 @@ export default function TutorConnect() {
                           {
                             label: "Certificaciones",
                             icon: "📜",
-                            // Eliminamos colSpan: 2; ahora ocupa la columna 2 natural
                             render: () => {
                               const hasDocencia = t.certificado_docencia && t.certificado_docencia !== "";
                               const hasElearning = t.certificado_teleformacion && t.certificado_teleformacion !== "";
@@ -709,7 +696,6 @@ export default function TutorConnect() {
                             },
                           },
 
-                          // Fila 2: Precio y Trabajado en Orbel
                           {
                             label: "Precio",
                             value: t.precio ? `${t.precio} €` : null,
@@ -721,7 +707,6 @@ export default function TutorConnect() {
                             icon: "🏢",
                           },
 
-                          // Fila 3: Cursos (Se mantiene abarcando todo el ancho)
                           {
                             label: "Cursos",
                             icon: "📚",
