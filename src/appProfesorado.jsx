@@ -143,18 +143,30 @@ const PaginationControls = ({ currentPage, totalItems, itemsPerPage, onPageChang
 // ==========================================
 export default function TutorConnect() {
   const [form, setForm] = useState(() => {
-    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-    const newForm = { ...initialForm };
-    if (params.has("nombre")) newForm.nombre = params.get("nombre");
-    if (params.has("titulacion")) newForm.titulacion = params.get("titulacion");
-    if (params.has("localidad")) newForm.localidad = params.get("localidad");
-    if (params.has("precioMax")) newForm.precioMax = params.get("precioMax");
-    if (params.has("sexo")) newForm.sexo = params.get("sexo");
-    if (params.has("trabajado_con_orbel")) newForm.trabajado_con_orbel = params.get("trabajado_con_orbel");
-    if (params.has("certificado_docencia")) newForm.certificado_docencia = params.get("certificado_docencia");
-    if (params.has("cursos") && params.get("cursos")) newForm.cursos = params.get("cursos").split(",");
-    if (params.has("categoriaTitulacion") && params.get("categoriaTitulacion")) newForm.categoriaTitulacion = params.get("categoriaTitulacion").split(",");
-    return newForm;
+    if (typeof window !== "undefined") {
+      const isReload =
+        (window.performance && window.performance.navigation && window.performance.navigation.type === 1) ||
+        (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType("navigation").length > 0 && window.performance.getEntriesByType("navigation")[0].type === "reload");
+
+      if (isReload) {
+        window.history.replaceState(null, "", window.location.pathname);
+        return { ...initialForm };
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const newForm = { ...initialForm };
+      if (params.has("nombre")) newForm.nombre = params.get("nombre");
+      if (params.has("titulacion")) newForm.titulacion = params.get("titulacion");
+      if (params.has("localidad")) newForm.localidad = params.get("localidad");
+      if (params.has("precioMax")) newForm.precioMax = params.get("precioMax");
+      if (params.has("sexo")) newForm.sexo = params.get("sexo");
+      if (params.has("trabajado_con_orbel")) newForm.trabajado_con_orbel = params.get("trabajado_con_orbel");
+      if (params.has("certificado_docencia")) newForm.certificado_docencia = params.get("certificado_docencia");
+      if (params.has("cursos") && params.get("cursos")) newForm.cursos = params.get("cursos").split(",");
+      if (params.has("categoriaTitulacion") && params.get("categoriaTitulacion")) newForm.categoriaTitulacion = params.get("categoriaTitulacion").split(",");
+      return newForm;
+    }
+    return { ...initialForm };
   });
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
