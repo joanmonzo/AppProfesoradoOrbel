@@ -142,11 +142,26 @@ const PaginationControls = ({ currentPage, totalItems, itemsPerPage, onPageChang
 // COMPONENTE PRINCIPAL
 // ==========================================
 export default function TutorConnect() {
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const newForm = { ...initialForm };
+    if (params.has("nombre")) newForm.nombre = params.get("nombre");
+    if (params.has("titulacion")) newForm.titulacion = params.get("titulacion");
+    if (params.has("localidad")) newForm.localidad = params.get("localidad");
+    if (params.has("precioMax")) newForm.precioMax = params.get("precioMax");
+    if (params.has("sexo")) newForm.sexo = params.get("sexo");
+    if (params.has("trabajado_con_orbel")) newForm.trabajado_con_orbel = params.get("trabajado_con_orbel");
+    if (params.has("certificado_docencia")) newForm.certificado_docencia = params.get("certificado_docencia");
+    if (params.has("cursos") && params.get("cursos")) newForm.cursos = params.get("cursos").split(",");
+    if (params.has("categoriaTitulacion") && params.get("categoriaTitulacion")) newForm.categoriaTitulacion = params.get("categoriaTitulacion").split(",");
+    return newForm;
+  });
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState("light");
+
+  const [initialSearchTriggered, setInitialSearchTriggered] = useState(false);
 
   const [user, setUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -165,21 +180,58 @@ export default function TutorConnect() {
   const [saveStatus, setSaveStatus] = useState({});
 
   useEffect(() => {
+    const processData = (data) => {
+      setNombresDisponibles([...new Set(data.map(p => p.nombre || p.name).filter(Boolean))].sort());
+      setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))].sort());
+      setCursosDisponibles([...new Set(
+        data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : []).filter(Boolean)
+      )].sort());
+      setLocalidades([...new Set(data.map(p => p.localidad).filter(Boolean))].sort());
+    };
+
+    const cachedData = sessionStorage.getItem("orbel_data_cache");
+    if (cachedData) {
+      try {
+        const data = JSON.parse(cachedData);
+        processData(data);
+        return;
+      } catch (e) {
+        console.error("Error leyendo caché", e);
+      }
+    }
+
     fetch(`${API_URL}?action=todos`)
       .then(res => res.json())
       .then(data => {
-        setNombresDisponibles([...new Set(data.map(p => p.nombre || p.name).filter(Boolean))].sort());
-        setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))].sort());
-        setCursosDisponibles([...new Set(
-          data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : []).filter(Boolean)
-        )].sort());
-        setLocalidades([...new Set(data.map(p => p.localidad).filter(Boolean))].sort());
+        sessionStorage.setItem("orbel_data_cache", JSON.stringify(data));
+        processData(data);
       }).catch(() => { });
   }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (form.nombre) params.set("nombre", form.nombre);
+    if (form.titulacion && form.titulacion !== "Todas") params.set("titulacion", form.titulacion);
+    if (form.localidad && form.localidad !== "Todas") params.set("localidad", form.localidad);
+    if (form.precioMax) params.set("precioMax", form.precioMax);
+    if (form.sexo && form.sexo !== "Todos") params.set("sexo", form.sexo);
+    if (form.trabajado_con_orbel && form.trabajado_con_orbel !== "Indiferente") params.set("trabajado_con_orbel", form.trabajado_con_orbel);
+    if (form.certificado_docencia && form.certificado_docencia !== "Indiferente") params.set("certificado_docencia", form.certificado_docencia);
+    if (form.cursos && form.cursos.length > 0) params.set("cursos", form.cursos.join(","));
+    if (form.categoriaTitulacion && form.categoriaTitulacion.length > 0) params.set("categoriaTitulacion", form.categoriaTitulacion.join(","));
+
+    const paramsString = params.toString();
+    const newSearch = paramsString ? `?${paramsString}` : "";
+    const newUrl = `${window.location.pathname}${newSearch}`;
+
+    if (window.location.search !== newSearch) {
+      window.history.pushState(null, "", newUrl);
+    }
+  }, [form]);
 
   // Login Control
   useEffect(() => {
@@ -235,26 +287,36 @@ export default function TutorConnect() {
   };
 
   const handleSearch = async () => {
-    setLoading(true);
     setError(null);
+    let data;
+
     try {
-      const res = await fetch(`${API_URL}?action=todos`);
+      const cachedData = sessionStorage.getItem("orbel_data_cache");
 
-      if (!res.ok) {
-        throw new Error(`Error de red: ${res.status} ${res.statusText}`);
-      }
+      if (cachedData) {
+        data = JSON.parse(cachedData);
+      } else {
+        setLoading(true);
+        const res = await fetch(`${API_URL}?action=todos`);
 
-      const data = await res.json();
+        if (!res.ok) {
+          throw new Error(`Error de red: ${res.status} ${res.statusText}`);
+        }
 
-      if (data && data.error) {
-        throw new Error(`Error desde Google: ${data.message}`);
-      }
+        data = await res.json();
 
-      if (!Array.isArray(data)) {
-        console.error("Lo que llegó de Google no es un Array:", data);
-        throw new Error(
-          "El servidor devolvió un formato incorrecto (revisa la consola).",
-        );
+        if (data && data.error) {
+          throw new Error(`Error desde Google: ${data.message}`);
+        }
+
+        if (!Array.isArray(data)) {
+          console.error("Lo que llegó de Google no es un Array:", data);
+          throw new Error(
+            "El servidor devolvió un formato incorrecto (revisa la consola).",
+          );
+        }
+
+        sessionStorage.setItem("orbel_data_cache", JSON.stringify(data));
       }
 
       const filtered = data.filter((t) => {
@@ -394,6 +456,17 @@ export default function TutorConnect() {
     }
   };
 
+  // Sincronización de Entrada: Ejecución automática
+  useEffect(() => {
+    if (user && !initialSearchTriggered) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.toString() !== "") {
+        handleSearch();
+      }
+      setInitialSearchTriggered(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, initialSearchTriggered]);
 
   const getNumericPrice = (p) => {
     if (!p) return Infinity;
