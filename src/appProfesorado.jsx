@@ -416,11 +416,9 @@ export default function TutorConnect() {
         const matchOrbel =
           form.trabajado_con_orbel === "Indiferente" ||
           (() => {
-            const val = String(t.trabajado_con_orbel || "")
-              .toLowerCase()
-              .trim();
-            const isNo = val === "no" || val === "";
-            return form.trabajado_con_orbel === "Sí" ? !isNo : isNo;
+            const val = String(t.trabajado_con_orbel || "").toLowerCase().trim();
+            const hasWorked = val.includes("si") || val.includes("sí") || /\d{4}/.test(val) || (val !== "" && !val.includes("no"));
+            return form.trabajado_con_orbel === "Sí" ? hasWorked : !hasWorked;
           })();
 
         const matchCertDocencia =
@@ -496,7 +494,8 @@ export default function TutorConnect() {
     const hasTeleform = String(t.certificado_teleformacion || "").toLowerCase().trim();
     if (hasTeleform !== "no" && hasTeleform !== "") s += 50;
     const workedOrbel = String(t.trabajado_con_orbel || "").toLowerCase().trim();
-    if (workedOrbel !== "no" && workedOrbel !== "") s += 30;
+    const hasWorked = workedOrbel.includes("si") || workedOrbel.includes("sí") || /\d{4}/.test(workedOrbel) || (workedOrbel !== "" && !workedOrbel.includes("no"));
+    if (hasWorked) s += 30;
     return s;
   };
 
@@ -721,11 +720,14 @@ export default function TutorConnect() {
                             E-LEARNING: {t.certificado_teleformacion}
                           </div>
                         )}
-                        {(t.trabajado_con_orbel && String(t.trabajado_con_orbel).toLowerCase().trim() !== "no" && String(t.trabajado_con_orbel).trim() !== "") && (
-                          <div className="badge badge-orbel">
-                            ORBEL: {t.trabajado_con_orbel}
-                          </div>
-                        )}
+                        {(t.trabajado_con_orbel && (() => {
+                          const val = String(t.trabajado_con_orbel).toLowerCase().trim();
+                          return val.includes("si") || val.includes("sí") || /\d{4}/.test(val) || (val !== "" && !val.includes("no"));
+                        })()) && (
+                            <div className="badge badge-orbel">
+                              ORBEL: {t.trabajado_con_orbel}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
