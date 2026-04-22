@@ -1,4 +1,11 @@
 export default function ProfessorCard({ t, isExpanded, onToggleExpand, observacion, onObservacionChange, onGuardar, savingId, saveStatus }) {
+
+    // Extracción global y segura de los datos de Orbel para esta tarjeta
+    const orbelKey = Object.keys(t).find(k => k.toLowerCase().includes("orbel"));
+    const rawOrbelVal = orbelKey ? t[orbelKey] : (t.trabajado_con_orbel || "");
+    const valOrbelStr = String(rawOrbelVal).toLowerCase().trim();
+    const hasWorkedOrbel = valOrbelStr !== "" && valOrbelStr !== "false" && valOrbelStr !== "falso" && !/^no\b/.test(valOrbelStr);
+
     return (
         <div className={`prof-card ${isExpanded ? 'expanded' : ''}`} onClick={onToggleExpand}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isExpanded ? 16 : 0 }}>
@@ -30,14 +37,11 @@ export default function ProfessorCard({ t, isExpanded, onToggleExpand, observaci
                                 E-LEARNING: {t.certificado_teleformacion}
                             </div>
                         )}
-                        {(t.trabajado_con_orbel && (() => {
-                            const val = String(t.trabajado_con_orbel).toLowerCase().trim();
-                            return val.includes("si") || val.includes("sí") || /\d{4}/.test(val) || (val !== "" && !val.includes("no"));
-                        })()) && (
-                                <div className="badge badge-orbel">
-                                    ORBEL: {t.trabajado_con_orbel}
-                                </div>
-                            )}
+                        {hasWorkedOrbel && (
+                            <div className="badge badge-orbel">
+                                ORBEL: {rawOrbelVal}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -74,7 +78,7 @@ export default function ProfessorCard({ t, isExpanded, onToggleExpand, observaci
                                 },
                             },
                             { label: "Precio", value: t.precio ? `${t.precio} €` : null, icon: "💰" },
-                            { label: "Ha trabajado en Orbel", value: t.trabajado_con_orbel, icon: "🏢" },
+                            { label: "Ha trabajado en Orbel", value: rawOrbelVal || "No", icon: "🏢" },
                             {
                                 label: "Cursos",
                                 icon: "📚",

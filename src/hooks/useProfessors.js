@@ -94,8 +94,11 @@ export const useProfessors = () => {
                 })();
 
                 const matchOrbel = form.trabajado_con_orbel === "Indiferente" || (() => {
-                    const val = String(t.trabajado_con_orbel || "").toLowerCase().trim();
-                    const hasWorked = val.includes("si") || val.includes("sí") || /\d{4}/.test(val) || (val !== "" && !val.includes("no"));
+                    const orbelKey = Object.keys(t).find(k => k.toLowerCase().includes("orbel"));
+                    const rawVal = orbelKey ? t[orbelKey] : (t.trabajado_con_orbel || "");
+
+                    const val = String(rawVal).toLowerCase().trim();
+                    const hasWorked = val !== "" && val !== "false" && val !== "falso" && !/^no\b/.test(val);
                     return form.trabajado_con_orbel === "Sí" ? hasWorked : !hasWorked;
                 })();
 
@@ -150,9 +153,14 @@ export const useProfessors = () => {
         if (hasDocencia !== "no" && hasDocencia !== "") s += 100;
         const hasTeleform = String(t.certificado_teleformacion || "").toLowerCase().trim();
         if (hasTeleform !== "no" && hasTeleform !== "") s += 50;
-        const workedOrbel = String(t.trabajado_con_orbel || "").toLowerCase().trim();
-        const hasWorked = workedOrbel.includes("si") || workedOrbel.includes("sí") || /\d{4}/.test(workedOrbel) || (workedOrbel !== "" && !workedOrbel.includes("no"));
+
+        const orbelKey = Object.keys(t).find(k => k.toLowerCase().includes("orbel"));
+        const rawWorkedVal = orbelKey ? t[orbelKey] : (t.trabajado_con_orbel || "");
+
+        const workedOrbel = String(rawWorkedVal).toLowerCase().trim();
+        const hasWorked = workedOrbel !== "" && workedOrbel !== "false" && workedOrbel !== "falso" && !/^no\b/.test(workedOrbel);
         if (hasWorked) s += 30;
+
         return s;
     };
 
