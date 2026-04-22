@@ -1,6 +1,5 @@
 export default function ProfessorCard({ t, isExpanded, onToggleExpand, observacion, onObservacionChange, onGuardar, savingId, saveStatus }) {
 
-    // Extracción global y segura de los datos de Orbel para esta tarjeta
     const orbelKey = Object.keys(t).find(k => k.toLowerCase().includes("orbel"));
     const rawOrbelVal = orbelKey ? t[orbelKey] : (t.trabajado_con_orbel || "");
     const valOrbelStr = String(rawOrbelVal).toLowerCase().trim();

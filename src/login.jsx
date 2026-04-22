@@ -17,7 +17,6 @@ export default function Login({ onLogin }) {
     e.preventDefault();
 
     try {
-      // 1. BLOQUEO PREVIO (NO entra a Firebase si contraseña falla)
       if (password !== ACCESS_PASSWORD) {
         setError("Contraseña incorrecta");
         return;
@@ -51,7 +50,6 @@ export default function Login({ onLogin }) {
         return;
       }
 
-      // 2. SI NO ESTÁ VERIFICADO → ENVÍA EMAIL Y BLOQUEA
       if (!user.emailVerified) {
         await sendEmailVerification(user);
         await signOut(auth);
@@ -59,7 +57,6 @@ export default function Login({ onLogin }) {
         return;
       }
 
-      // 3. OK → ENTRA
       onLogin(user);
     } catch (err) {
       setError("Error de acceso");
@@ -69,7 +66,6 @@ export default function Login({ onLogin }) {
   return (
     <div className="app-container">
       <div style={{ maxWidth: 420, margin: "0 auto", paddingTop: 80 }}>
-        {/* TÍTULO */}
         <div style={{ marginBottom: 40, textAlign: "center" }}>
           <h1 className="title-font" style={{ fontSize: 34, fontWeight: 700 }}>
             Academia Industrial by Orbel
@@ -79,7 +75,6 @@ export default function Login({ onLogin }) {
           </p>
         </div>
 
-        {/* FORM CARD estilo panel */}
         <div className="panel">
           <form onSubmit={handleLogin}>
             <div style={{ marginBottom: 16 }}>
