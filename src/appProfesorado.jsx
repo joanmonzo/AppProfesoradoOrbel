@@ -3,7 +3,7 @@ import "./index.css";
 import { auth } from "./firebase";
 import { signOut } from "firebase/auth";
 
-import Login from "./Login";
+import Login from "./Acceso";
 import FilterPanel from "./components/FilterPanel";
 import ProfessorCard from "./components/ProfessorCard";
 import PaginationControls from "./components/PaginationControls";
