@@ -57,7 +57,7 @@ export const useProfessors = () => {
                 if (!res.ok) throw new Error(`Error de red: ${res.status} ${res.statusText}`);
                 data = await res.json();
                 if (data && data.error) throw new Error(`Error desde Google: ${data.message}`);
-                if (!Array.isArray(data)) throw new Error("El servidor devolvió un formato incorrecto (revisa la consola).");
+                if (!Array.isArray(data)) throw new Error("El servidor devolvió un formato incorrecto.");
                 sessionStorage.setItem("orbel_data_cache", JSON.stringify(data));
             }
 
@@ -94,10 +94,7 @@ export const useProfessors = () => {
                 })();
 
                 const matchOrbel = form.trabajado_con_orbel === "Indiferente" || (() => {
-                    const orbelKey = Object.keys(t).find(k => k.toLowerCase().includes("orbel"));
-                    const rawVal = orbelKey ? t[orbelKey] : (t.trabajado_con_orbel || "");
-
-                    const val = String(rawVal).toLowerCase().trim();
+                    const val = String(t.trabajado_con_orbel || "").toLowerCase().trim();
                     const hasWorked = val !== "" && val !== "false" && val !== "falso" && !/^no\b/.test(val);
                     return form.trabajado_con_orbel === "Sí" ? hasWorked : !hasWorked;
                 })();
@@ -120,7 +117,7 @@ export const useProfessors = () => {
             filtered.forEach((t) => { obs[t.id] = t.observaciones ?? ""; });
             setObservaciones(obs);
         } catch (err) {
-            setError(err.message || "Error desconocido en el frontend.");
+            setError(err.message || "Error desconocido.");
         } finally {
             setLoading(false);
         }
@@ -130,7 +127,7 @@ export const useProfessors = () => {
         setSavingId(id);
         setSaveStatus(prev => ({ ...prev, [id]: null }));
         try {
-            const query = new URLSearchParams({ action: "observaciones", id, observaciones: texto, observacion: texto }).toString();
+            const query = new URLSearchParams({ action: "observaciones", id, observaciones: texto }).toString();
             const res = await fetch(`${API_URL}?${query}`, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: texto });
             if (!res.ok) throw new Error();
             setSaveStatus(prev => ({ ...prev, [id]: "ok" }));
@@ -154,11 +151,8 @@ export const useProfessors = () => {
         const hasTeleform = String(t.certificado_teleformacion || "").toLowerCase().trim();
         if (hasTeleform !== "no" && hasTeleform !== "") s += 50;
 
-        const orbelKey = Object.keys(t).find(k => k.toLowerCase().includes("orbel"));
-        const rawWorkedVal = orbelKey ? t[orbelKey] : (t.trabajado_con_orbel || "");
-
-        const workedOrbel = String(rawWorkedVal).toLowerCase().trim();
-        const hasWorked = workedOrbel !== "" && workedOrbel !== "false" && workedOrbel !== "falso" && !/^no\b/.test(workedOrbel);
+        const val = String(t.trabajado_con_orbel || "").toLowerCase().trim();
+        const hasWorked = val !== "" && val !== "false" && val !== "falso" && !/^no\b/.test(val);
         if (hasWorked) s += 30;
 
         return s;
