@@ -24,7 +24,7 @@ export default function FilterPanel({ form, onChange, onMultiChange, nombresDisp
                     <MultiSelectDropdown options={cursosDisponibles} selected={form.cursos} onChange={(v) => onMultiChange("cursos", v)} placeholder="Todos los cursos" />
                 </div>
                 <div>
-                    <label className="label">Localidad</label>
+                    <label className="label">Ubicación</label>
                     <select name="localidad" value={form.localidad} onChange={onChange} className="input">
                         <option value="Todas">Todas</option>
                         {localidades.map(l => <option key={l} value={l}>{l}</option>)}
