@@ -1,3 +1,6 @@
+// Panel de filtros de búsqueda
+// Permite filtrar por nombre, sexo, cursos, ubicación, experiencia y titulaciones
+
 import MultiSelectDropdown from "./MultiSelectDropdown";
 
 export default function FilterPanel({ form, onChange, onMultiChange, nombresDisponibles, titulaciones, cursosDisponibles, localidades, onSearch, loading }) {

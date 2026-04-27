@@ -11,6 +11,8 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  // Contraseña maestra para el registro inicial/acceso
   const ACCESS_PASSWORD = "S~97?%OASFs^e`!^Zp.&0mA_";
 
   const handleLogin = async (e) => {

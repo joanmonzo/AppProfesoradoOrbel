@@ -1,3 +1,7 @@
+// Tarjeta de perfil de profesor
+// Muestra información resumida y detalles al hacer clic
+// Permite la gestión de observaciones
+
 export default function ProfessorCard({ t, isExpanded, onToggleExpand, observacion, onObservacionChange, onGuardar, savingId, saveStatus }) {
 
     const rawOrbelVal = t.trabajado_con_orbel || "";

@@ -12,7 +12,9 @@ import { useAuth } from "./hooks/useAuth";
 import { useFilters } from "./hooks/useFilters";
 import { useProfessors } from "./hooks/useProfessors";
 
-export default function TutorConnect() {
+// Componente principal
+export default function AppProfesorado() {
+  // Estados y Hooks
   const { user, setUser, loadingAuth } = useAuth();
   const { form, handleChange, handleMultiChange } = useFilters();
   const {
@@ -25,10 +27,12 @@ export default function TutorConnect() {
   const [expandedId, setExpandedId] = useState(null);
   const [initialSearchTriggered, setInitialSearchTriggered] = useState(false);
 
+  // Sincronización del tema visual
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Disparo de búsqueda inicial basado en parámetros de URL al loguearse
   useEffect(() => {
     if (user && !initialSearchTriggered) {
       const params = new URLSearchParams(window.location.search);
@@ -39,6 +43,7 @@ export default function TutorConnect() {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
+  // Control de acceso y carga
   if (loadingAuth) return <div className="app-container"><div className="panel" style={{ textAlign: "center" }}>Cargando acceso...</div></div>;
   if (!user) return <div className="app-container"><Login onLogin={setUser} /></div>;
 

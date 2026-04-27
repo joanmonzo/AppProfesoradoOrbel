@@ -6,6 +6,7 @@ export const useAuth = () => {
     const [user, setUser] = useState(null);
     const [loadingAuth, setLoadingAuth] = useState(true);
 
+    // Observador del estado de autenticación
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (u) => {
             if (u) {

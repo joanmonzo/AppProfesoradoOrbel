@@ -1,7 +1,10 @@
+// Hook personalizado para gestionar la lógica de los profesores
+
 import { useState, useEffect } from "react";
 import { API_URL, CATEGORIA_KEYWORDS } from "../utils/constants";
 
 export const useProfessors = () => {
+    // Estados de Datos y UI
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -17,6 +20,7 @@ export const useProfessors = () => {
 
     const itemsPerPage = 8;
 
+    // Carga inicial de datos
     useEffect(() => {
         const processData = (data) => {
             setNombresDisponibles([...new Set(data.map(p => p.nombre || p.name).filter(Boolean))].sort());
@@ -43,6 +47,7 @@ export const useProfessors = () => {
             }).catch(() => { });
     }, []);
 
+    // Ejecuta el filtrado de perfiles basándose en el estado del formulario
     const handleSearch = async (form) => {
         setError(null);
         let data;
@@ -123,6 +128,7 @@ export const useProfessors = () => {
         }
     };
 
+    // Persistencia de notas privadas en la base de datos
     const handleGuardar = async (id, texto) => {
         setSavingId(id);
         setSaveStatus(prev => ({ ...prev, [id]: null }));
@@ -144,6 +150,7 @@ export const useProfessors = () => {
         return str.includes("-") ? Number(str.split("-")[0]) : Number(str) || Infinity;
     };
 
+    // Calcula una puntuación de relevancia para el ranking "Por defecto"
     const getScore = (t) => {
         let s = 0;
         const hasDocencia = String(t.certificado_docencia || "").toLowerCase().trim();
