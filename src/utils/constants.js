@@ -1,4 +1,4 @@
-export const API_URL = "https://script.google.com/macros/s/AKfycbwy8jdOcI_tuU05leo_ld68tGSjPw7rE2QA7tcOe46NIbrhuj-XsFKmTT6sWy-NUlrx/exec";
+export const API_URL = "https://script.google.com/macros/s/AKfycbw6magin8oFMUapfcDHvUyhfaz6SWe4_Mt0oKxjmSUsYxOU_npQs4h36DfaNdBflxrhoQ/exec";
 
 export const initialForm = {
     nombre: "",
