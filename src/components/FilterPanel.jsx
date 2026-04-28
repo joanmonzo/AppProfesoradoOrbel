@@ -2,6 +2,7 @@
 // Permite filtrar por nombre, sexo, cursos, ubicación, experiencia y titulaciones
 
 import MultiSelectDropdown from "./MultiSelectDropdown";
+import SingleSearchableSelect from "./SingleSearchableSelect";
 
 export default function FilterPanel({ form, onChange, onMultiChange, nombresDisponibles, titulaciones, cursosDisponibles, localidades, onSearch, loading }) {
     return (
@@ -9,10 +10,13 @@ export default function FilterPanel({ form, onChange, onMultiChange, nombresDisp
             <div className="grid-2">
                 <div>
                     <label className="label">Nombre</label>
-                    <input type="text" name="nombre" value={form.nombre} onChange={onChange} list="nombres-list" placeholder="Buscar profesor..." className="input" />
-                    <datalist id="nombres-list">
-                        {nombresDisponibles.map(n => <option key={n} value={n} />)}
-                    </datalist>
+                    <SingleSearchableSelect 
+                        name="nombre"
+                        options={nombresDisponibles} 
+                        value={form.nombre} 
+                        onChange={onChange} 
+                        placeholder="Buscar profesor..." 
+                    />
                 </div>
                 <div>
                     <label className="label">Sexo</label>
@@ -60,8 +64,13 @@ export default function FilterPanel({ form, onChange, onMultiChange, nombresDisp
                 </div>
                 <div>
                     <label className="label">Titulaciones</label>
-                    <input type="text" name="titulacion" value={form.titulacion === "Todas" ? "" : form.titulacion} onChange={onChange} list="titulaciones-list" className="input" placeholder="Ej. Prevención, Soldadura, Marketing..." />
-                    <datalist id="titulaciones-list">{titulaciones.map(t => <option key={t} value={t} />)}</datalist>
+                    <SingleSearchableSelect 
+                        name="titulacion"
+                        options={titulaciones} 
+                        value={form.titulacion} 
+                        onChange={onChange} 
+                        placeholder="Todas las titulaciones" 
+                    />
                 </div>
             </div>
             <button onClick={onSearch} disabled={loading} className="btn-primary title-font">

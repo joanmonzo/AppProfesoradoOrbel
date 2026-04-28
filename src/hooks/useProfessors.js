@@ -23,8 +23,15 @@ export const useProfessors = () => {
     // Carga inicial de datos
     useEffect(() => {
         const processData = (data) => {
-            setNombresDisponibles([...new Set(data.map(p => p.nombre || p.name).filter(Boolean))].sort());
-            setTitulaciones([...new Set(data.map(p => p.titulacion).filter(Boolean))].sort());
+            setNombresDisponibles([...new Set(data.map(p => {
+                let nom = String(p.nombre || p.name || "").trim();
+                return nom.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+            }).filter(Boolean))].sort());
+            setTitulaciones([...new Set(data.map(p => {
+                let tit = String(p.titulacion || "").trim();
+                // Convertir a minúsculas y luego poner en mayúscula cada palabra relevante
+                return tit.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+            }).filter(Boolean))].sort());
             setCursosDisponibles([...new Set(data.flatMap(p => p.cursos ? (Array.isArray(p.cursos) ? p.cursos : p.cursos.split(",").map(c => c.trim())) : []).filter(Boolean))].sort());
             setLocalidades([...new Set(data.map(p => p.localidad).filter(Boolean))].sort());
         };
