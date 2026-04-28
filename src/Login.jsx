@@ -12,8 +12,8 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // Contraseña maestra para el registro inicial/acceso
-  const ACCESS_PASSWORD = "S~97?%OASFs^e`!^Zp.&0mA_";
+  // Contraseña maestra obtenida desde variables de entorno (.env)
+  const ACCESS_PASSWORD = process.env.REACT_APP_ACCESS_PASSWORD;
 
   const handleLogin = async (e) => {
     e.preventDefault();
