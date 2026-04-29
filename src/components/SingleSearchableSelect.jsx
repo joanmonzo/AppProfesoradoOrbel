@@ -5,7 +5,7 @@ export default function SingleSearchableSelect({ name, options, value, onChange,
     const [searchTerm, setSearchTerm] = useState("");
     const containerRef = useRef(null);
 
-    const filteredOptions = options.filter(opt => 
+    const filteredOptions = options.filter(opt =>
         opt.toLowerCase().includes(searchTerm.toLowerCase())
     ).slice(0, 50);
 
@@ -57,7 +57,7 @@ export default function SingleSearchableSelect({ name, options, value, onChange,
                             onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-secondary)")}
                             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                         >
-                            Ver todos / Limpiar
+                            Ver todos
                         </div>
                         {filteredOptions.map((opt) => (
                             <div
