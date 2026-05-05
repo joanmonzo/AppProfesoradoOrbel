@@ -18,7 +18,16 @@ export default function MultiSelectDropdown({ options, selected, onChange, place
                 style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", userSelect: "none", background: "var(--input-bg)", minHeight: "40px" }}
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <span style={{ fontSize: 13, color: selected.length === 0 ? "var(--text-secondary)" : "var(--text-primary)" }}>
+                <span style={{ 
+                    fontSize: 13, 
+                    color: selected.length === 0 ? "var(--text-secondary)" : "var(--text-primary)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    flex: 1,
+                    minWidth: 0,
+                    marginRight: 8
+                }}>
                     {selected.length === 0 ? placeholder : `${selected.length} seleccionado(s)`}
                 </span>
                 <span style={{ fontSize: 10 }}>{isOpen ? "▲" : "▼"}</span>

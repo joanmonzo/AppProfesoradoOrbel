@@ -26,13 +26,31 @@ export default function SingleSearchableSelect({ name, options, value, onChange,
     };
 
     return (
-        <div ref={containerRef} style={{ position: "relative" }}>
+        <div ref={containerRef} style={{ position: "relative", minWidth: 0 }}>
             <div
                 className="input"
-                style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--input-bg)" }}
+                style={{
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    background: "var(--input-bg)",
+                    minWidth: 0,
+                    width: "100%",
+                    overflow: "hidden"
+                }}
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <span style={{ fontSize: 13, color: !value || value === "Todas" ? "var(--text-secondary)" : "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginRight: 8 }}>
+                <span style={{
+                    fontSize: 13,
+                    color: !value || value === "Todas" ? "var(--text-secondary)" : "var(--text-primary)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    marginRight: 8,
+                    flex: 1, // Toma todo el espacio disponible
+                    minWidth: 0 // Crucial para que elipsis funcione en flexbox
+                }}>
                     {(!value || value === "Todas") ? placeholder : value}
                 </span>
                 <span style={{ fontSize: 10, flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
